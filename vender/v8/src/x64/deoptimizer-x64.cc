@@ -1,3 +1,7 @@
+#include "src/v8.h"
+
+#if V8_TARGET_ARCH_X64
+
 // Copyright 2012 the V8 project authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -20,6 +24,12 @@ const int Deoptimizer::table_entry_size_ = 10;
 
 int Deoptimizer::patch_size() {
   return Assembler::kCallSequenceLength;
+}
+
+
+void Deoptimizer::EnsureRelocSpaceForLazyDeoptimization(Handle<Code> code) {
+  // Empty because there is no need for relocation information for the code
+  // patching in Deoptimizer::PatchCodeForDeoptimization below.
 }
 
 
@@ -128,7 +138,7 @@ bool Deoptimizer::HasAlignmentPadding(JSFunction* function) {
 
 #define __ masm()->
 
-void Deoptimizer::EntryGenerator::Generate() {
+void Deoptimizer::TableEntryGenerator::Generate() {
   GeneratePrologue();
 
   // Save all general purpose registers before messing with them.
@@ -153,6 +163,8 @@ void Deoptimizer::EntryGenerator::Generate() {
 
   const int kSavedRegistersAreaSize = kNumberOfRegisters * kRegisterSize +
                                       kDoubleRegsSize;
+
+  __ Store(ExternalReference(Isolate::kCEntryFPAddress, isolate()), rbp);
 
   // We use this to keep the value of the fifth argument temporarily.
   // Unfortunately we can't store it directly in r8 (used for passing
@@ -299,7 +311,6 @@ void Deoptimizer::EntryGenerator::Generate() {
 
   // Set up the roots register.
   __ InitializeRootRegister();
-  __ InitializeSmiConstantRegister();
 
   // Return to the continuation point.
   __ ret(0);
@@ -348,5 +359,8 @@ void FrameDescription::SetCallerConstantPool(unsigned offset, intptr_t value) {
 
 
 } }  // namespace v8::internal
+
+#endif  // V8_TARGET_ARCH_X64
+
 
 #endif  // V8_TARGET_ARCH_X64

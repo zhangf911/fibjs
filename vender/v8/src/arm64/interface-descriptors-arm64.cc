@@ -1,3 +1,7 @@
+#include "src/v8.h"
+
+#if V8_TARGET_ARCH_ARM64
+
 // Copyright 2012 the V8 project authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -16,17 +20,21 @@ const Register CallInterfaceDescriptor::ContextRegister() { return cp; }
 
 const Register LoadDescriptor::ReceiverRegister() { return x1; }
 const Register LoadDescriptor::NameRegister() { return x2; }
+const Register LoadDescriptor::SlotRegister() { return x0; }
 
 
-const Register VectorLoadICTrampolineDescriptor::SlotRegister() { return x0; }
-
-
-const Register VectorLoadICDescriptor::VectorRegister() { return x3; }
+const Register LoadWithVectorDescriptor::VectorRegister() { return x3; }
 
 
 const Register StoreDescriptor::ReceiverRegister() { return x1; }
 const Register StoreDescriptor::NameRegister() { return x2; }
 const Register StoreDescriptor::ValueRegister() { return x0; }
+
+
+const Register VectorStoreICTrampolineDescriptor::SlotRegister() { return x4; }
+
+
+const Register VectorStoreICDescriptor::VectorRegister() { return x3; }
 
 
 const Register StoreTransitionDescriptor::MapRegister() { return x3; }
@@ -60,6 +68,10 @@ const Register MathPowTaggedDescriptor::exponent() { return x11; }
 const Register MathPowIntegerDescriptor::exponent() { return x12; }
 
 
+const Register GrowArrayElementsDescriptor::ObjectRegister() { return x0; }
+const Register GrowArrayElementsDescriptor::KeyRegister() { return x3; }
+
+
 void FastNewClosureDescriptor::Initialize(CallInterfaceDescriptorData* data) {
   // cp: context
   // x2: function info
@@ -88,6 +100,12 @@ void NumberToStringDescriptor::Initialize(CallInterfaceDescriptorData* data) {
   // cp: context
   // x0: value
   Register registers[] = {cp, x0};
+  data->Initialize(arraysize(registers), registers, NULL);
+}
+
+
+void TypeofDescriptor::Initialize(CallInterfaceDescriptorData* data) {
+  Register registers[] = {cp, x3};
   data->Initialize(arraysize(registers), registers, NULL);
 }
 
@@ -124,7 +142,23 @@ void CreateAllocationSiteDescriptor::Initialize(
   // x2: feedback vector
   // x3: call feedback slot
   Register registers[] = {cp, x2, x3};
-  data->Initialize(arraysize(registers), registers, NULL);
+  Representation representations[] = {Representation::Tagged(),
+                                      Representation::Tagged(),
+                                      Representation::Smi()};
+  data->Initialize(arraysize(registers), registers, representations);
+}
+
+
+void CreateWeakCellDescriptor::Initialize(CallInterfaceDescriptorData* data) {
+  // cp: context
+  // x2: feedback vector
+  // x3: call feedback slot
+  // x1: tagged value to put in the weak cell
+  Register registers[] = {cp, x2, x3, x1};
+  Representation representations[] = {
+      Representation::Tagged(), Representation::Tagged(), Representation::Smi(),
+      Representation::Tagged()};
+  data->Initialize(arraysize(registers), registers, representations);
 }
 
 
@@ -148,6 +182,16 @@ void CallFunctionWithFeedbackDescriptor::Initialize(
   Representation representations[] = {Representation::Tagged(),
                                       Representation::Tagged(),
                                       Representation::Smi()};
+  data->Initialize(arraysize(registers), registers, representations);
+}
+
+
+void CallFunctionWithFeedbackAndVectorDescriptor::Initialize(
+    CallInterfaceDescriptorData* data) {
+  Register registers[] = {cp, x1, x3, x2};
+  Representation representations[] = {
+      Representation::Tagged(), Representation::Tagged(), Representation::Smi(),
+      Representation::Tagged()};
   data->Initialize(arraysize(registers), registers, representations);
 }
 
@@ -232,6 +276,15 @@ void InternalArrayConstructorDescriptor::Initialize(
                                       Representation::Tagged(),
                                       Representation::Integer32()};
   data->Initialize(arraysize(registers), registers, representations);
+}
+
+
+void CompareDescriptor::Initialize(CallInterfaceDescriptorData* data) {
+  // cp: context
+  // x1: left operand
+  // x0: right operand
+  Register registers[] = {cp, x1, x0};
+  data->Initialize(arraysize(registers), registers, NULL);
 }
 
 
@@ -362,6 +415,31 @@ void ApiFunctionDescriptor::Initialize(CallInterfaceDescriptorData* data) {
       x4,  // call_data
       x2,  // holder
       x1,  // api_function_address
+      x3,  // actual number of arguments
+  };
+  Representation representations[] = {
+      Representation::Tagged(),     // context
+      Representation::Tagged(),     // callee
+      Representation::Tagged(),     // call_data
+      Representation::Tagged(),     // holder
+      Representation::External(),   // api_function_address
+      Representation::Integer32(),  // actual number of arguments
+  };
+  data->Initialize(arraysize(registers), registers, representations,
+                   &default_descriptor);
+}
+
+
+void ApiAccessorDescriptor::Initialize(CallInterfaceDescriptorData* data) {
+  static PlatformInterfaceDescriptor default_descriptor =
+      PlatformInterfaceDescriptor(CAN_INLINE_TARGET_ADDRESS);
+
+  Register registers[] = {
+      cp,  // context
+      x0,  // callee
+      x4,  // call_data
+      x2,  // holder
+      x1,  // api_function_address
   };
   Representation representations[] = {
       Representation::Tagged(),    // context
@@ -373,7 +451,25 @@ void ApiFunctionDescriptor::Initialize(CallInterfaceDescriptorData* data) {
   data->Initialize(arraysize(registers), registers, representations,
                    &default_descriptor);
 }
+
+
+void MathRoundVariantDescriptor::Initialize(CallInterfaceDescriptorData* data) {
+  Register registers[] = {
+      cp,  // context
+      x1,  // math rounding function
+      x3,  // vector slot id
+  };
+  Representation representations[] = {
+      Representation::Tagged(),  //
+      Representation::Tagged(),  //
+      Representation::Tagged(),  //
+  };
+  data->Initialize(arraysize(registers), registers, representations);
+}
 }
 }  // namespace v8::internal
+
+#endif  // V8_TARGET_ARCH_ARM64
+
 
 #endif  // V8_TARGET_ARCH_ARM64

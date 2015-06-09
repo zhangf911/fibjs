@@ -66,8 +66,8 @@ namespace fibjs
 	{
 		static ClassData::ClassMethod s_method[] = 
 		{
-			{"connect", s_connect},
-			{"accept", s_accept}
+			{"connect", s_connect, false},
+			{"accept", s_accept, false}
 		};
 
 		static ClassData::ClassProperty s_property[] = 
@@ -147,7 +147,7 @@ namespace fibjs
 
 		CONSTRUCT_ENTER(1, 0);
 
-		OPT_ARG(v8::Local<v8::Array>, 0, v8::Array::New(isolate));
+		OPT_ARG(v8::Local<v8::Array>, 0, v8::Array::New(Isolate::now().isolate));
 
 		hr = _new(v0, vr, args.This());
 

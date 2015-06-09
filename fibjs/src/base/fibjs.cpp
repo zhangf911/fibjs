@@ -1,10 +1,7 @@
 
 #include <locale.h>
 
-#ifdef assert
-#undef assert
-#endif
-
+#include <string.h>
 #include "ifs/global.h"
 #include "ifs/process.h"
 #include "ifs/global.h"
@@ -16,84 +13,86 @@
 
 namespace fibjs
 {
-v8::Isolate *isolate;
-v8::Persistent<v8::Context> s_context;
-v8::Persistent<v8::Object> s_global;
-obj_ptr<SandBox> s_topSandbox;
 
 void init_argv(int argc, char **argv);
 
+class ShellArrayBufferAllocator : public v8::ArrayBuffer::Allocator
+{
+public:
+    virtual void* Allocate(size_t length)
+    {
+        void* data = AllocateUninitialized(length);
+        return data == NULL ? data : memset(data, 0, length);
+    }
+
+    virtual void* AllocateUninitialized(size_t length)
+    {
+        return malloc(length);
+    }
+
+    virtual void Free(void* data, size_t)
+    {
+        free(data);
+    }
+};
+
 void _main(const char *fname)
 {
-    v8::V8::Initialize();
-
     v8::Platform *platform = v8::platform::CreateDefaultPlatform();
     v8::V8::InitializePlatform(platform);
 
-    isolate = v8::Isolate::New();
-    v8::Locker locker(isolate);
-    v8::Isolate::Scope isolate_scope(isolate);
+    v8::V8::Initialize();
 
-    v8::HandleScope handle_scope(isolate);
+    Isolate is;
+    Isolate::reg(&is);
 
-    v8::Local<v8::Context> _context = v8::Context::New(isolate);
+    Isolate& isolate = Isolate::now();
+
+    v8::Isolate::CreateParams create_params;
+    ShellArrayBufferAllocator array_buffer_allocator;
+    create_params.array_buffer_allocator = &array_buffer_allocator;
+
+    isolate.isolate = v8::Isolate::New(create_params);
+    v8::Locker locker(isolate.isolate);
+    v8::Isolate::Scope isolate_scope(isolate.isolate);
+
+    v8::HandleScope handle_scope(isolate.isolate);
+
+    v8::Local<v8::Context> _context = v8::Context::New(isolate.isolate);
     v8::Context::Scope context_scope(_context);
 
     v8::Local<v8::Object> glob = _context->Global();
     global_base::class_info().Attach(glob, NULL);
 
     Function_base::class_info().Attach(
-        glob->Get(v8::String::NewFromUtf8(isolate, "Function"))->ToObject()->GetPrototype()->ToObject(),
+        glob->Get(v8::String::NewFromUtf8(isolate.isolate, "Function"))->ToObject()->GetPrototype()->ToObject(),
         NULL);
 
-    s_context.Reset(isolate, _context);
-    s_global.Reset(isolate, glob);
+    isolate.s_context.Reset(isolate.isolate, _context);
+    isolate.s_global.Reset(isolate.isolate, glob);
 
     JSFiber *fb = new JSFiber();
     {
         JSFiber::scope s(fb);
-        s_topSandbox = new SandBox();
+        isolate.s_topSandbox = new SandBox();
 
-        s_topSandbox->initRoot();
+        isolate.s_topSandbox->initRoot();
         if (fname)
-            s.m_hr = s_topSandbox->run(fname);
+            s.m_hr = isolate.s_topSandbox->run(fname);
         else
-            s.m_hr = s_topSandbox->repl();
+            s.m_hr = isolate.s_topSandbox->repl();
     }
 
     process_base::exit(0);
 
-    isolate->Dispose();
+    isolate.isolate->Dispose();
 
     v8::V8::ShutdownPlatform();
     delete platform;
 
-    s_context.Reset();
+    isolate.s_context.Reset();
 }
 
-}
-
-void MyInterruptCallback(v8::Isolate *isolate, void *data)
-{
-    std::string msg;
-
-    msg.append("User interrupt.", 15);
-    msg.append(fibjs::traceInfo());
-
-    fibjs::asyncLog(fibjs::console_base::_ERROR, msg);
-    fibjs::process_base::exit(0);
-}
-
-void breakEvent(int dummy)
-{
-    static bool double_break = false;
-
-    if (double_break)
-        fibjs::process_base::exit(0);
-
-    double_break = true;
-    puts("");
-    fibjs::isolate->RequestInterrupt(MyInterruptCallback, NULL);
 }
 
 #ifdef _WIN32
@@ -173,17 +172,6 @@ void enableDump()
     }
 }
 
-BOOL WINAPI win_breakEvent(DWORD dwCtrlType)
-{
-    breakEvent(0);
-    return TRUE;
-}
-
-void enableBreak()
-{
-    SetConsoleCtrlHandler(win_breakEvent, TRUE);
-}
-
 #else
 
 #include <pwd.h>
@@ -196,11 +184,6 @@ void enableDump()
     { RLIM_INFINITY, RLIM_INFINITY };
 
     setrlimit(RLIMIT_CORE, &corelimit);
-}
-
-void enableBreak()
-{
-    signal(SIGINT, breakEvent);
 }
 
 #endif
@@ -218,7 +201,6 @@ int main(int argc, char *argv[])
                                " --use_strict"
                                " --nologfile_per_isolate";
     enableDump();
-    enableBreak();
 
     exlib::OSThread::Sleep(1);
 

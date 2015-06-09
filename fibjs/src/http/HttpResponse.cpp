@@ -294,7 +294,7 @@ result_t HttpResponse::readFrom(BufferedStream_base *stm, exlib::AsyncEvent *ac)
                     || !qisdigit(pThis->m_strLine[11])
                     || (pThis->m_strLine.length() > 12
                         && qisdigit(pThis->m_strLine[12])))
-                return CHECK_ERROR(Runtime::setError("bad protocol: " + pThis->m_strLine));
+                return CHECK_ERROR(Runtime::setError("HttpResponse: bad protocol: " + pThis->m_strLine));
 
             pThis->m_pThis->set_status(atoi(pThis->m_strLine.c_str() + 8));
             pThis->m_strLine.resize(8);
@@ -404,6 +404,45 @@ result_t HttpResponse::redirect(const char *url)
     m_status = 302;
     setHeader("Location", url);
     return 0;
+}
+
+result_t HttpResponse::sendHeader(Stream_base* stm, exlib::AsyncEvent* ac)
+{
+    if (!ac)
+        return CHECK_ERROR(CALL_E_NOSYNC);
+
+    if (m_cookies)
+    {
+        int32_t len, i;
+
+        m_cookies->get_length(len);
+
+        for (i = 0; i < len; i ++)
+        {
+            Variant v;
+            obj_ptr<object_base> cookie;
+            std::string str;
+
+            m_cookies->_indexed_getter(i, v);
+            cookie = v.object();
+
+            if (cookie)
+            {
+                cookie->toString(str);
+                addHeader("Set-Cookie", str.c_str());
+            }
+        }
+
+        m_cookies.Release();
+    }
+
+    int pos = shortcut[m_status / 100 - 1] + m_status % 100;
+    std::string strCommand;
+
+    get_protocol(strCommand);
+    strCommand.append(status_lines[pos], status_lines_size[pos]);
+
+    return m_message.sendHeader(stm, strCommand, ac);
 }
 
 } /* namespace fibjs */

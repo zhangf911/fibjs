@@ -1,3 +1,7 @@
+#include "src/v8.h"
+
+#if V8_TARGET_ARCH_IA32
+
 // Copyright 2012 the V8 project authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -27,7 +31,7 @@ void Deoptimizer::EnsureRelocSpaceForLazyDeoptimization(Handle<Code> code) {
   HandleScope scope(isolate);
 
   // Compute the size of relocation information needed for the code
-  // patching in Deoptimizer::DeoptimizeFunction.
+  // patching in Deoptimizer::PatchCodeForDeoptimization below.
   int min_reloc_size = 0;
   int prev_pc_offset = 0;
   DeoptimizationInputData* deopt_data =
@@ -212,7 +216,8 @@ void Deoptimizer::CopyDoubleRegisters(FrameDescription* output_frame) {
 
 
 bool Deoptimizer::HasAlignmentPadding(JSFunction* function) {
-  int parameter_count = function->shared()->formal_parameter_count() + 1;
+  int parameter_count =
+      function->shared()->internal_formal_parameter_count() + 1;
   unsigned input_frame_size = input_->GetFrameSize();
   unsigned alignment_state_offset =
       input_frame_size - parameter_count * kPointerSize -
@@ -227,7 +232,7 @@ bool Deoptimizer::HasAlignmentPadding(JSFunction* function) {
 
 #define __ masm()->
 
-void Deoptimizer::EntryGenerator::Generate() {
+void Deoptimizer::TableEntryGenerator::Generate() {
   GeneratePrologue();
 
   // Save all general purpose registers before messing with them.
@@ -243,6 +248,9 @@ void Deoptimizer::EntryGenerator::Generate() {
   }
 
   __ pushad();
+
+  ExternalReference c_entry_fp_address(Isolate::kCEntryFPAddress, isolate());
+  __ mov(Operand::StaticVariable(c_entry_fp_address), ebp);
 
   const int kSavedRegistersAreaSize = kNumberOfRegisters * kPointerSize +
                                       kDoubleRegsSize;
@@ -428,5 +436,8 @@ void FrameDescription::SetCallerConstantPool(unsigned offset, intptr_t value) {
 
 
 } }  // namespace v8::internal
+
+#endif  // V8_TARGET_ARCH_IA32
+
 
 #endif  // V8_TARGET_ARCH_IA32

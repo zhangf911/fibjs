@@ -25,12 +25,14 @@
     <ClInclude Include="include\v8-profiler.h" />
     <ClInclude Include="include\v8-testing.h" />
     <ClInclude Include="include\v8-util.h" />
+    <ClInclude Include="include\v8-version.h" />
     <ClInclude Include="include\v8.h" />
     <ClInclude Include="include\v8config.h" />
     <ClInclude Include="src\accessors.h" />
     <ClInclude Include="src\allocation-site-scopes.h" />
     <ClInclude Include="src\allocation-tracker.h" />
     <ClInclude Include="src\allocation.h" />
+    <ClInclude Include="src\api-natives.h" />
     <ClInclude Include="src\api.h" />
     <ClInclude Include="src\arguments.h" />
     <ClInclude Include="src\assembler.h" />
@@ -40,6 +42,7 @@
     <ClInclude Include="src\ast.h" />
     <ClInclude Include="src\background-parsing-task.h" />
     <ClInclude Include="src\bailout-reason.h" />
+    <ClInclude Include="src\base\adapters.h" />
     <ClInclude Include="src\base\atomicops.h" />
     <ClInclude Include="src\base\atomicops_internals_arm64_gcc.h" />
     <ClInclude Include="src\base\atomicops_internals_arm_gcc.h" />
@@ -48,6 +51,7 @@
     <ClInclude Include="src\base\atomicops_internals_mips64_gcc.h" />
     <ClInclude Include="src\base\atomicops_internals_mips_gcc.h" />
     <ClInclude Include="src\base\atomicops_internals_portable.h" />
+    <ClInclude Include="src\base\atomicops_internals_ppc_gcc.h" />
     <ClInclude Include="src\base\atomicops_internals_tsan.h" />
     <ClInclude Include="src\base\atomicops_internals_x86_gcc.h" />
     <ClInclude Include="src\base\atomicops_internals_x86_msvc.h" />
@@ -58,6 +62,7 @@
     <ClInclude Include="src\base\division-by-constant.h" />
     <ClInclude Include="src\base\flags.h" />
     <ClInclude Include="src\base\functional.h" />
+    <ClInclude Include="src\base\iterator.h" />
     <ClInclude Include="src\base\lazy-instance.h" />
     <ClInclude Include="src\base\logging.h" />
     <ClInclude Include="src\base\macros.h" />
@@ -94,9 +99,11 @@
     <ClInclude Include="src\code.h" />
     <ClInclude Include="src\codegen.h" />
     <ClInclude Include="src\compilation-cache.h" />
+    <ClInclude Include="src\compilation-dependencies.h" />
     <ClInclude Include="src\compilation-statistics.h" />
     <ClInclude Include="src\compiler.h" />
     <ClInclude Include="src\compiler\access-builder.h" />
+    <ClInclude Include="src\compiler\all-nodes.h" />
     <ClInclude Include="src\compiler\ast-graph-builder.h" />
     <ClInclude Include="src\compiler\ast-loop-assignment-analyzer.h" />
     <ClInclude Include="src\compiler\basic-block-instrumentor.h" />
@@ -104,19 +111,18 @@
     <ClInclude Include="src\compiler\code-generator-impl.h" />
     <ClInclude Include="src\compiler\code-generator.h" />
     <ClInclude Include="src\compiler\common-node-cache.h" />
+    <ClInclude Include="src\compiler\common-operator-reducer.h" />
     <ClInclude Include="src\compiler\common-operator.h" />
     <ClInclude Include="src\compiler\control-builders.h" />
+    <ClInclude Include="src\compiler\control-equivalence.h" />
+    <ClInclude Include="src\compiler\control-flow-optimizer.h" />
     <ClInclude Include="src\compiler\control-reducer.h" />
     <ClInclude Include="src\compiler\diamond.h" />
+    <ClInclude Include="src\compiler\frame-elider.h" />
+    <ClInclude Include="src\compiler\frame-states.h" />
     <ClInclude Include="src\compiler\frame.h" />
     <ClInclude Include="src\compiler\gap-resolver.h" />
-    <ClInclude Include="src\compiler\generic-algorithm-inl.h" />
-    <ClInclude Include="src\compiler\generic-algorithm.h" />
-    <ClInclude Include="src\compiler\generic-graph.h" />
-    <ClInclude Include="src\compiler\generic-node-inl.h" />
-    <ClInclude Include="src\compiler\generic-node.h" />
     <ClInclude Include="src\compiler\graph-builder.h" />
-    <ClInclude Include="src\compiler\graph-inl.h" />
     <ClInclude Include="src\compiler\graph-reducer.h" />
     <ClInclude Include="src\compiler\graph-replay.h" />
     <ClInclude Include="src\compiler\graph-visualizer.h" />
@@ -131,28 +137,34 @@
     <ClInclude Include="src\compiler\js-generic-lowering.h" />
     <ClInclude Include="src\compiler\js-graph.h" />
     <ClInclude Include="src\compiler\js-inlining.h" />
-    <ClInclude Include="src\compiler\js-intrinsic-builder.h" />
+    <ClInclude Include="src\compiler\js-intrinsic-lowering.h" />
     <ClInclude Include="src\compiler\js-operator.h" />
+    <ClInclude Include="src\compiler\js-type-feedback.h" />
     <ClInclude Include="src\compiler\js-typed-lowering.h" />
+    <ClInclude Include="src\compiler\jump-threading.h" />
     <ClInclude Include="src\compiler\linkage-impl.h" />
     <ClInclude Include="src\compiler\linkage.h" />
+    <ClInclude Include="src\compiler\liveness-analyzer.h" />
+    <ClInclude Include="src\compiler\load-elimination.h" />
+    <ClInclude Include="src\compiler\loop-analysis.h" />
+    <ClInclude Include="src\compiler\loop-peeling.h" />
     <ClInclude Include="src\compiler\machine-operator-reducer.h" />
     <ClInclude Include="src\compiler\machine-operator.h" />
     <ClInclude Include="src\compiler\machine-type.h" />
-    <ClInclude Include="src\compiler\node-aux-data-inl.h" />
+    <ClInclude Include="src\compiler\move-optimizer.h" />
     <ClInclude Include="src\compiler\node-aux-data.h" />
     <ClInclude Include="src\compiler\node-cache.h" />
+    <ClInclude Include="src\compiler\node-marker.h" />
     <ClInclude Include="src\compiler\node-matchers.h" />
-    <ClInclude Include="src\compiler\node-properties-inl.h" />
     <ClInclude Include="src\compiler\node-properties.h" />
     <ClInclude Include="src\compiler\node.h" />
     <ClInclude Include="src\compiler\opcodes.h" />
-    <ClInclude Include="src\compiler\operator-properties-inl.h" />
     <ClInclude Include="src\compiler\operator-properties.h" />
     <ClInclude Include="src\compiler\operator.h" />
-    <ClInclude Include="src\compiler\phi-reducer.h" />
+    <ClInclude Include="src\compiler\osr.h" />
     <ClInclude Include="src\compiler\pipeline-statistics.h" />
     <ClInclude Include="src\compiler\pipeline.h" />
+    <ClInclude Include="src\compiler\ppc\instruction-codes-ppc.h" />
     <ClInclude Include="src\compiler\raw-machine-assembler.h" />
     <ClInclude Include="src\compiler\register-allocator-verifier.h" />
     <ClInclude Include="src\compiler\register-allocator.h" />
@@ -165,6 +177,8 @@
     <ClInclude Include="src\compiler\simplified-operator-reducer.h" />
     <ClInclude Include="src\compiler\simplified-operator.h" />
     <ClInclude Include="src\compiler\source-position.h" />
+    <ClInclude Include="src\compiler\state-values-utils.h" />
+    <ClInclude Include="src\compiler\tail-call-optimization.h" />
     <ClInclude Include="src\compiler\typer.h" />
     <ClInclude Include="src\compiler\value-numbering-reducer.h" />
     <ClInclude Include="src\compiler\verifier.h" />
@@ -219,6 +233,7 @@
     <ClInclude Include="src\heap\gc-tracer.h" />
     <ClInclude Include="src\heap\heap-inl.h" />
     <ClInclude Include="src\heap\heap.h" />
+    <ClInclude Include="src\heap\identity-map.h" />
     <ClInclude Include="src\heap\incremental-marking-inl.h" />
     <ClInclude Include="src\heap\incremental-marking.h" />
     <ClInclude Include="src\heap\mark-compact-inl.h" />
@@ -277,14 +292,14 @@
     <ClInclude Include="src\ic\stub-cache.h" />
     <ClInclude Include="src\icu_util.h" />
     <ClInclude Include="src\interface-descriptors.h" />
-    <ClInclude Include="src\interface.h" />
     <ClInclude Include="src\interpreter-irregexp.h" />
-    <ClInclude Include="src\isolate-inl.h" />
     <ClInclude Include="src\isolate.h" />
     <ClInclude Include="src\json-parser.h" />
     <ClInclude Include="src\json-stringifier.h" />
     <ClInclude Include="src\jsregexp-inl.h" />
     <ClInclude Include="src\jsregexp.h" />
+    <ClInclude Include="src\layout-descriptor-inl.h" />
+    <ClInclude Include="src\layout-descriptor.h" />
     <ClInclude Include="src\libplatform\default-platform.h" />
     <ClInclude Include="src\libplatform\task-queue.h" />
     <ClInclude Include="src\libplatform\worker-thread.h" />
@@ -303,21 +318,33 @@
     <ClInclude Include="src\lookup.h" />
     <ClInclude Include="src\macro-assembler.h" />
     <ClInclude Include="src\messages.h" />
+    <ClInclude Include="src\modules.h" />
     <ClInclude Include="src\msan.h" />
-    <ClInclude Include="src\natives.h" />
     <ClInclude Include="src\objects-inl.h" />
     <ClInclude Include="src\objects.h" />
-    <ClInclude Include="src\optimizing-compiler-thread.h" />
+    <ClInclude Include="src\optimizing-compile-dispatcher.h" />
     <ClInclude Include="src\ostreams.h" />
     <ClInclude Include="src\parser.h" />
+    <ClInclude Include="src\pending-compilation-error-handler.h" />
     <ClInclude Include="src\perf-jit.h" />
+    <ClInclude Include="src\ppc\assembler-ppc-inl.h" />
+    <ClInclude Include="src\ppc\assembler-ppc.h" />
+    <ClInclude Include="src\ppc\code-stubs-ppc.h" />
+    <ClInclude Include="src\ppc\codegen-ppc.h" />
+    <ClInclude Include="src\ppc\constants-ppc.h" />
+    <ClInclude Include="src\ppc\frames-ppc.h" />
+    <ClInclude Include="src\ppc\lithium-codegen-ppc.h" />
+    <ClInclude Include="src\ppc\lithium-gap-resolver-ppc.h" />
+    <ClInclude Include="src\ppc\lithium-ppc.h" />
+    <ClInclude Include="src\ppc\macro-assembler-ppc.h" />
+    <ClInclude Include="src\ppc\regexp-macro-assembler-ppc.h" />
+    <ClInclude Include="src\ppc\simulator-ppc.h" />
     <ClInclude Include="src\preparse-data-format.h" />
     <ClInclude Include="src\preparse-data.h" />
     <ClInclude Include="src\preparser.h" />
     <ClInclude Include="src\prettyprinter.h" />
     <ClInclude Include="src\profile-generator-inl.h" />
     <ClInclude Include="src\profile-generator.h" />
-    <ClInclude Include="src\property-details-inl.h" />
     <ClInclude Include="src\property-details.h" />
     <ClInclude Include="src\property.h" />
     <ClInclude Include="src\prototype.h" />
@@ -330,23 +357,27 @@
     <ClInclude Include="src\runtime-profiler.h" />
     <ClInclude Include="src\runtime\runtime-utils.h" />
     <ClInclude Include="src\runtime\runtime.h" />
-    <ClInclude Include="src\runtime\string-builder.h" />
     <ClInclude Include="src\safepoint-table.h" />
     <ClInclude Include="src\sampler.h" />
     <ClInclude Include="src\scanner-character-streams.h" />
     <ClInclude Include="src\scanner.h" />
     <ClInclude Include="src\scopeinfo.h" />
     <ClInclude Include="src\scopes.h" />
-    <ClInclude Include="src\serialize.h" />
+    <ClInclude Include="src\signature.h" />
     <ClInclude Include="src\simulator.h" />
     <ClInclude Include="src\small-pointer-list.h" />
     <ClInclude Include="src\smart-pointers.h" />
-    <ClInclude Include="src\snapshot-source-sink.h" />
-    <ClInclude Include="src\snapshot.h" />
+    <ClInclude Include="src\snapshot\natives.h" />
+    <ClInclude Include="src\snapshot\serialize.h" />
+    <ClInclude Include="src\snapshot\snapshot-source-sink.h" />
+    <ClInclude Include="src\snapshot\snapshot.h" />
     <ClInclude Include="src\splay-tree-inl.h" />
     <ClInclude Include="src\splay-tree.h" />
+    <ClInclude Include="src\startup-data-util.h" />
+    <ClInclude Include="src\string-builder.h" />
     <ClInclude Include="src\string-search.h" />
     <ClInclude Include="src\string-stream.h" />
+    <ClInclude Include="src\strings-storage.h" />
     <ClInclude Include="src\strtod.h" />
     <ClInclude Include="src\third_party\fdlibm\fdlibm.h" />
     <ClInclude Include="src\third_party\kernel\tools\perf\util\jitdump.h" />
@@ -366,7 +397,6 @@
     <ClInclude Include="src\unicode-inl.h" />
     <ClInclude Include="src\unicode.h" />
     <ClInclude Include="src\unique.h" />
-    <ClInclude Include="src\utils-inl.h" />
     <ClInclude Include="src\utils.h" />
     <ClInclude Include="src\v8.h" />
     <ClInclude Include="src\v8memory.h" />
@@ -400,7 +430,6 @@
     <ClInclude Include="src\x87\simulator-x87.h" />
     <ClInclude Include="src\zone-allocator.h" />
     <ClInclude Include="src\zone-containers.h" />
-    <ClInclude Include="src\zone-inl.h" />
     <ClInclude Include="src\zone.h" />
   </ItemGroup>
   <ItemGroup>
@@ -408,6 +437,7 @@
     <ClCompile Include="src\allocation-site-scopes.cc" />
     <ClCompile Include="src\allocation-tracker.cc" />
     <ClCompile Include="src\allocation.cc" />
+    <ClCompile Include="src\api-natives.cc" />
     <ClCompile Include="src\api.cc" />
     <ClCompile Include="src\arguments.cc" />
     <ClCompile Include="src\assembler.cc" />
@@ -427,6 +457,7 @@
     <ClCompile Include="src\base\platform\_date_cache.cc" />
     <ClCompile Include="src\base\platform\condition-variable.cc" />
     <ClCompile Include="src\base\platform\mutex.cc" />
+    <ClCompile Include="src\base\platform\platform-aix.cc" />
     <ClCompile Include="src\base\platform\platform-fiber.cc" />
     <ClCompile Include="src\base\platform\platform-freebsd.cc" />
     <ClCompile Include="src\base\platform\platform-linux.cc" />
@@ -453,19 +484,26 @@
     <ClCompile Include="src\code-stubs.cc" />
     <ClCompile Include="src\codegen.cc" />
     <ClCompile Include="src\compilation-cache.cc" />
+    <ClCompile Include="src\compilation-dependencies.cc" />
     <ClCompile Include="src\compilation-statistics.cc" />
     <ClCompile Include="src\compiler.cc" />
     <ClCompile Include="src\compiler\access-builder.cc" />
+    <ClCompile Include="src\compiler\all-nodes.cc" />
     <ClCompile Include="src\compiler\ast-graph-builder.cc" />
     <ClCompile Include="src\compiler\ast-loop-assignment-analyzer.cc" />
     <ClCompile Include="src\compiler\basic-block-instrumentor.cc" />
     <ClCompile Include="src\compiler\change-lowering.cc" />
     <ClCompile Include="src\compiler\code-generator.cc" />
+    <ClCompile Include="src\compiler\common-node-cache.cc" />
+    <ClCompile Include="src\compiler\common-operator-reducer.cc" />
     <ClCompile Include="src\compiler\common-operator.cc" />
     <ClCompile Include="src\compiler\control-builders.cc" />
+    <ClCompile Include="src\compiler\control-equivalence.cc" />
+    <ClCompile Include="src\compiler\control-flow-optimizer.cc" />
     <ClCompile Include="src\compiler\control-reducer.cc" />
+    <ClCompile Include="src\compiler\frame-elider.cc" />
+    <ClCompile Include="src\compiler\frame-states.cc" />
     <ClCompile Include="src\compiler\gap-resolver.cc" />
-    <ClCompile Include="src\compiler\graph-builder.cc" />
     <ClCompile Include="src\compiler\graph-reducer.cc" />
     <ClCompile Include="src\compiler\graph-replay.cc" />
     <ClCompile Include="src\compiler\graph-visualizer.cc" />
@@ -480,18 +518,34 @@
     <ClCompile Include="src\compiler\js-generic-lowering.cc" />
     <ClCompile Include="src\compiler\js-graph.cc" />
     <ClCompile Include="src\compiler\js-inlining.cc" />
-    <ClCompile Include="src\compiler\js-intrinsic-builder.cc" />
+    <ClCompile Include="src\compiler\js-intrinsic-lowering.cc" />
     <ClCompile Include="src\compiler\js-operator.cc" />
+    <ClCompile Include="src\compiler\js-type-feedback.cc" />
     <ClCompile Include="src\compiler\js-typed-lowering.cc" />
+    <ClCompile Include="src\compiler\jump-threading.cc" />
     <ClCompile Include="src\compiler\linkage.cc" />
+    <ClCompile Include="src\compiler\liveness-analyzer.cc" />
+    <ClCompile Include="src\compiler\load-elimination.cc" />
+    <ClCompile Include="src\compiler\loop-analysis.cc" />
+    <ClCompile Include="src\compiler\loop-peeling.cc" />
     <ClCompile Include="src\compiler\machine-operator-reducer.cc" />
     <ClCompile Include="src\compiler\machine-operator.cc" />
     <ClCompile Include="src\compiler\machine-type.cc" />
+    <ClCompile Include="src\compiler\move-optimizer.cc" />
     <ClCompile Include="src\compiler\node-cache.cc" />
+    <ClCompile Include="src\compiler\node-marker.cc" />
+    <ClCompile Include="src\compiler\node-matchers.cc" />
+    <ClCompile Include="src\compiler\node-properties.cc" />
     <ClCompile Include="src\compiler\node.cc" />
+    <ClCompile Include="src\compiler\opcodes.cc" />
+    <ClCompile Include="src\compiler\operator-properties.cc" />
     <ClCompile Include="src\compiler\operator.cc" />
+    <ClCompile Include="src\compiler\osr.cc" />
     <ClCompile Include="src\compiler\pipeline-statistics.cc" />
     <ClCompile Include="src\compiler\pipeline.cc" />
+    <ClCompile Include="src\compiler\ppc\code-generator-ppc.cc" />
+    <ClCompile Include="src\compiler\ppc\instruction-selector-ppc.cc" />
+    <ClCompile Include="src\compiler\ppc\linkage-ppc.cc" />
     <ClCompile Include="src\compiler\raw-machine-assembler.cc" />
     <ClCompile Include="src\compiler\register-allocator-verifier.cc" />
     <ClCompile Include="src\compiler\register-allocator.cc" />
@@ -503,6 +557,8 @@
     <ClCompile Include="src\compiler\simplified-operator-reducer.cc" />
     <ClCompile Include="src\compiler\simplified-operator.cc" />
     <ClCompile Include="src\compiler\source-position.cc" />
+    <ClCompile Include="src\compiler\state-values-utils.cc" />
+    <ClCompile Include="src\compiler\tail-call-optimization.cc" />
     <ClCompile Include="src\compiler\typer.cc" />
     <ClCompile Include="src\compiler\value-numbering-reducer.cc" />
     <ClCompile Include="src\compiler\verifier.cc" />
@@ -524,7 +580,6 @@
     <ClCompile Include="src\elements-kind.cc" />
     <ClCompile Include="src\elements.cc" />
     <ClCompile Include="src\execution.cc" />
-    <ClCompile Include="src\experimental-libraries.cc" />
     <ClCompile Include="src\extensions\externalize-string-extension.cc" />
     <ClCompile Include="src\extensions\free-buffer-extension.cc" />
     <ClCompile Include="src\extensions\gc-extension.cc" />
@@ -538,6 +593,9 @@
     <ClCompile Include="src\full-codegen.cc" />
     <ClCompile Include="src\func-name-inferrer.cc" />
     <ClCompile Include="src\gdb-jit.cc" />
+    <ClCompile Include="src\gen\experimental-libraries.cc" />
+    <ClCompile Include="src\gen\extras-libraries.cc" />
+    <ClCompile Include="src\gen\libraries.cc" />
     <ClCompile Include="src\global-handles.cc" />
     <ClCompile Include="src\handles.cc" />
     <ClCompile Include="src\heap-profiler.cc" />
@@ -545,6 +603,7 @@
     <ClCompile Include="src\heap\gc-idle-time-handler.cc" />
     <ClCompile Include="src\heap\gc-tracer.cc" />
     <ClCompile Include="src\heap\heap.cc" />
+    <ClCompile Include="src\heap\identity-map.cc" />
     <ClCompile Include="src\heap\incremental-marking.cc" />
     <ClCompile Include="src\heap\mark-compact.cc" />
     <ClCompile Include="src\heap\objects-visiting.cc" />
@@ -603,6 +662,11 @@
     <ClCompile Include="src\ic\ic-compiler.cc" />
     <ClCompile Include="src\ic\ic-state.cc" />
     <ClCompile Include="src\ic\ic.cc" />
+    <ClCompile Include="src\ic\ppc\access-compiler-ppc.cc" />
+    <ClCompile Include="src\ic\ppc\handler-compiler-ppc.cc" />
+    <ClCompile Include="src\ic\ppc\ic-compiler-ppc.cc" />
+    <ClCompile Include="src\ic\ppc\ic-ppc.cc" />
+    <ClCompile Include="src\ic\ppc\stub-cache-ppc.cc" />
     <ClCompile Include="src\ic\stub-cache.cc" />
     <ClCompile Include="src\ic\x64\access-compiler-x64.cc" />
     <ClCompile Include="src\ic\x64\handler-compiler-x64.cc" />
@@ -616,14 +680,13 @@
     <ClCompile Include="src\ic\x87\stub-cache-x87.cc" />
     <ClCompile Include="src\icu_util.cc" />
     <ClCompile Include="src\interface-descriptors.cc" />
-    <ClCompile Include="src\interface.cc" />
     <ClCompile Include="src\interpreter-irregexp.cc" />
     <ClCompile Include="src\isolate.cc" />
     <ClCompile Include="src\jsregexp.cc" />
+    <ClCompile Include="src\layout-descriptor.cc" />
     <ClCompile Include="src\libplatform\default-platform.cc" />
     <ClCompile Include="src\libplatform\task-queue.cc" />
     <ClCompile Include="src\libplatform\worker-thread.cc" />
-    <ClCompile Include="src\libraries.cc" />
     <ClCompile Include="src\lithium-allocator.cc" />
     <ClCompile Include="src\lithium-codegen.cc" />
     <ClCompile Include="src\lithium.cc" />
@@ -632,13 +695,34 @@
     <ClCompile Include="src\log.cc" />
     <ClCompile Include="src\lookup.cc" />
     <ClCompile Include="src\messages.cc" />
+    <ClCompile Include="src\modules.cc" />
     <ClCompile Include="src\objects-debug.cc" />
     <ClCompile Include="src\objects-printer.cc" />
     <ClCompile Include="src\objects.cc" />
-    <ClCompile Include="src\optimizing-compiler-thread.cc" />
+    <ClCompile Include="src\optimizing-compile-dispatcher.cc" />
     <ClCompile Include="src\ostreams.cc" />
     <ClCompile Include="src\parser.cc" />
+    <ClCompile Include="src\pattern-rewriter.cc" />
+    <ClCompile Include="src\pending-compilation-error-handler.cc" />
     <ClCompile Include="src\perf-jit.cc" />
+    <ClCompile Include="src\ppc\assembler-ppc.cc" />
+    <ClCompile Include="src\ppc\builtins-ppc.cc" />
+    <ClCompile Include="src\ppc\code-stubs-ppc.cc" />
+    <ClCompile Include="src\ppc\codegen-ppc.cc" />
+    <ClCompile Include="src\ppc\constants-ppc.cc" />
+    <ClCompile Include="src\ppc\cpu-ppc.cc" />
+    <ClCompile Include="src\ppc\debug-ppc.cc" />
+    <ClCompile Include="src\ppc\deoptimizer-ppc.cc" />
+    <ClCompile Include="src\ppc\disasm-ppc.cc" />
+    <ClCompile Include="src\ppc\frames-ppc.cc" />
+    <ClCompile Include="src\ppc\full-codegen-ppc.cc" />
+    <ClCompile Include="src\ppc\interface-descriptors-ppc.cc" />
+    <ClCompile Include="src\ppc\lithium-codegen-ppc.cc" />
+    <ClCompile Include="src\ppc\lithium-gap-resolver-ppc.cc" />
+    <ClCompile Include="src\ppc\lithium-ppc.cc" />
+    <ClCompile Include="src\ppc\macro-assembler-ppc.cc" />
+    <ClCompile Include="src\ppc\regexp-macro-assembler-ppc.cc" />
+    <ClCompile Include="src\ppc\simulator-ppc.cc" />
     <ClCompile Include="src\preparse-data.cc" />
     <ClCompile Include="src\preparser.cc" />
     <ClCompile Include="src\prettyprinter.cc" />
@@ -650,7 +734,6 @@
     <ClCompile Include="src\regexp-stack.cc" />
     <ClCompile Include="src\rewriter.cc" />
     <ClCompile Include="src\runtime-profiler.cc" />
-    <ClCompile Include="src\runtime\runtime-api.cc" />
     <ClCompile Include="src\runtime\runtime-array.cc" />
     <ClCompile Include="src\runtime\runtime-classes.cc" />
     <ClCompile Include="src\runtime\runtime-collections.cc" />
@@ -683,12 +766,15 @@
     <ClCompile Include="src\scanner.cc" />
     <ClCompile Include="src\scopeinfo.cc" />
     <ClCompile Include="src\scopes.cc" />
-    <ClCompile Include="src\serialize.cc" />
-    <ClCompile Include="src\snapshot-common.cc" />
-    <ClCompile Include="src\snapshot-empty.cc" />
-    <ClCompile Include="src\snapshot-source-sink.cc" />
+    <ClCompile Include="src\snapshot\serialize.cc" />
+    <ClCompile Include="src\snapshot\snapshot-common.cc" />
+    <ClCompile Include="src\snapshot\snapshot-empty.cc" />
+    <ClCompile Include="src\snapshot\snapshot-source-sink.cc" />
+    <ClCompile Include="src\startup-data-util.cc" />
+    <ClCompile Include="src\string-builder.cc" />
     <ClCompile Include="src\string-search.cc" />
     <ClCompile Include="src\string-stream.cc" />
+    <ClCompile Include="src\strings-storage.cc" />
     <ClCompile Include="src\strtod.cc" />
     <ClCompile Include="src\third_party\fdlibm\fdlibm.cc" />
     <ClCompile Include="src\token.cc" />
@@ -810,7 +896,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_RAND_S;DEBUG;NOMINMAX;V8_NO_FAST_TLS;VERIFY_HEAP;OBJECT_PRINT;ENABLE_DISASSEMBLER;ENABLE_HANDLE_ZAPPING;ENABLE_EXTRA_CHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_RAND_S;DEBUG;NOMINMAX;V8_NO_FAST_TLS;V8_DEPRECATION_WARNINGS;ENABLE_HANDLE_ZAPPING;VERIFY_HEAP;OBJECT_PRINT;ENABLE_DISASSEMBLER;V8_ENABLE_CHECKS;TRACE_MAPS;ENABLE_SLOW_DCHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\include;$(ProjectDir)\src;$(ProjectDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
@@ -831,7 +917,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_RAND_S;DEBUG;NOMINMAX;V8_NO_FAST_TLS;VERIFY_HEAP;OBJECT_PRINT;ENABLE_DISASSEMBLER;ENABLE_HANDLE_ZAPPING;ENABLE_EXTRA_CHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_RAND_S;DEBUG;NOMINMAX;V8_NO_FAST_TLS;V8_DEPRECATION_WARNINGS;ENABLE_HANDLE_ZAPPING;VERIFY_HEAP;OBJECT_PRINT;ENABLE_DISASSEMBLER;V8_ENABLE_CHECKS;TRACE_MAPS;ENABLE_SLOW_DCHECKS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\include;$(ProjectDir)\src;$(ProjectDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
@@ -854,7 +940,7 @@
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_RAND_S;NDEBUG;NOMINMAX;V8_NO_FAST_TLS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_RAND_S;NDEBUG;NOMINMAX;V8_NO_FAST_TLS;V8_DEPRECATION_WARNINGS;ENABLE_HANDLE_ZAPPING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\include;$(ProjectDir)\src;$(ProjectDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
@@ -881,7 +967,7 @@
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_RAND_S;NDEBUG;NOMINMAX;V8_NO_FAST_TLS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_LIB;_CRT_SECURE_NO_WARNINGS;_CRT_RAND_S;NDEBUG;NOMINMAX;V8_NO_FAST_TLS;V8_DEPRECATION_WARNINGS;ENABLE_HANDLE_ZAPPING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\include;$(ProjectDir)\src;$(ProjectDir)\..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>

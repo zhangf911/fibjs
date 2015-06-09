@@ -98,7 +98,7 @@ result_t BlockQueue::clear()
 
 result_t BlockQueue::toArray(v8::Local<v8::Array> &retVal)
 {
-    v8::Local<v8::Array> a = v8::Array::New(isolate, (int) m_list.size());
+    v8::Local<v8::Array> a = v8::Array::New(Isolate::now().isolate, (int) m_list.size());
     int32_t i = 0;
 
     for (std::list<VariantEx>::iterator it = m_list.begin(); it != m_list.end();
@@ -130,14 +130,7 @@ result_t BlockQueue::toJSON(const char *key, v8::Local<v8::Value> &retVal)
 
 result_t BlockQueue::put(v8::Local<v8::Value> e)
 {
-    if ((int)m_list.size() == m_size)
-    {
-        v8::Unlocker unlocker(isolate);
-
-        m_semPut.wait();
-    }
-    else
-        m_semPut.wait();
+    m_semPut.wait();
 
     m_list.push_back(e);
 
@@ -148,14 +141,7 @@ result_t BlockQueue::put(v8::Local<v8::Value> e)
 
 result_t BlockQueue::take(v8::Local<v8::Value> &retVal)
 {
-    if (m_list.size() == 0)
-    {
-        v8::Unlocker unlocker(isolate);
-
-        m_semTake.wait();
-    }
-    else
-        m_semTake.wait();
+    m_semTake.wait();
 
     retVal = *m_list.begin();
     m_list.pop_front();

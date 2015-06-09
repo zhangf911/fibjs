@@ -70,17 +70,17 @@ namespace fibjs
 	{
 		static ClassData::ClassMethod s_method[] = 
 		{
-			{"resize", s_resize},
-			{"push", s_push},
-			{"pop", s_pop},
-			{"slice", s_slice},
-			{"concat", s_concat},
-			{"every", s_every},
-			{"some", s_some},
-			{"filter", s_filter},
-			{"forEach", s_forEach},
-			{"map", s_map},
-			{"toArray", s_toArray}
+			{"resize", s_resize, false},
+			{"push", s_push, false},
+			{"pop", s_pop, false},
+			{"slice", s_slice, false},
+			{"concat", s_concat, false},
+			{"every", s_every, false},
+			{"some", s_some, false},
+			{"filter", s_filter, false},
+			{"forEach", s_forEach, false},
+			{"map", s_map, false},
+			{"toArray", s_toArray, false}
 		};
 
 		static ClassData::ClassProperty s_property[] = 
@@ -231,7 +231,7 @@ namespace fibjs
 		METHOD_ENTER(2, 1);
 
 		ARG(v8::Local<v8::Function>, 0);
-		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(Isolate::now().isolate));
 
 		hr = pInst->every(v0, v1, vr);
 
@@ -246,7 +246,7 @@ namespace fibjs
 		METHOD_ENTER(2, 1);
 
 		ARG(v8::Local<v8::Function>, 0);
-		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(Isolate::now().isolate));
 
 		hr = pInst->some(v0, v1, vr);
 
@@ -261,7 +261,7 @@ namespace fibjs
 		METHOD_ENTER(2, 1);
 
 		ARG(v8::Local<v8::Function>, 0);
-		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(Isolate::now().isolate));
 
 		hr = pInst->filter(v0, v1, vr);
 
@@ -274,7 +274,7 @@ namespace fibjs
 		METHOD_ENTER(2, 1);
 
 		ARG(v8::Local<v8::Function>, 0);
-		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(Isolate::now().isolate));
 
 		hr = pInst->forEach(v0, v1);
 
@@ -289,7 +289,7 @@ namespace fibjs
 		METHOD_ENTER(2, 1);
 
 		ARG(v8::Local<v8::Function>, 0);
-		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(Isolate::now().isolate));
 
 		hr = pInst->map(v0, v1, vr);
 

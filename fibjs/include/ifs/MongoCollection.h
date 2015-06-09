@@ -76,21 +76,21 @@ namespace fibjs
 	{
 		static ClassData::ClassMethod s_method[] = 
 		{
-			{"find", s_find},
-			{"findOne", s_findOne},
-			{"findAndModify", s_findAndModify},
-			{"insert", s_insert},
-			{"save", s_save},
-			{"update", s_update},
-			{"remove", s_remove},
-			{"runCommand", s_runCommand},
-			{"drop", s_drop},
-			{"ensureIndex", s_ensureIndex},
-			{"reIndex", s_reIndex},
-			{"dropIndex", s_dropIndex},
-			{"dropIndexes", s_dropIndexes},
-			{"getIndexes", s_getIndexes},
-			{"getCollection", s_getCollection}
+			{"find", s_find, false},
+			{"findOne", s_findOne, false},
+			{"findAndModify", s_findAndModify, false},
+			{"insert", s_insert, false},
+			{"save", s_save, false},
+			{"update", s_update, false},
+			{"remove", s_remove, false},
+			{"runCommand", s_runCommand, false},
+			{"drop", s_drop, false},
+			{"ensureIndex", s_ensureIndex, false},
+			{"reIndex", s_reIndex, false},
+			{"dropIndex", s_dropIndex, false},
+			{"dropIndexes", s_dropIndexes, false},
+			{"getIndexes", s_getIndexes, false},
+			{"getCollection", s_getCollection, false}
 		};
 
 		static ClassData::ClassNamed s_named = 
@@ -144,8 +144,8 @@ namespace fibjs
 		METHOD_INSTANCE(MongoCollection_base);
 		METHOD_ENTER(2, 0);
 
-		OPT_ARG(v8::Local<v8::Object>, 0, v8::Object::New(isolate));
-		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 0, v8::Object::New(Isolate::now().isolate));
+		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(Isolate::now().isolate));
 
 		hr = pInst->find(v0, v1, vr);
 
@@ -159,8 +159,8 @@ namespace fibjs
 		METHOD_INSTANCE(MongoCollection_base);
 		METHOD_ENTER(2, 0);
 
-		OPT_ARG(v8::Local<v8::Object>, 0, v8::Object::New(isolate));
-		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 0, v8::Object::New(Isolate::now().isolate));
+		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(Isolate::now().isolate));
 
 		hr = pInst->findOne(v0, v1, vr);
 
@@ -260,7 +260,7 @@ namespace fibjs
 		METHOD_OVER(2, 1);
 
 		ARG(arg_string, 0);
-		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(Isolate::now().isolate));
 
 		hr = pInst->runCommand(v0, v1, vr);
 
@@ -283,7 +283,7 @@ namespace fibjs
 		METHOD_ENTER(2, 1);
 
 		ARG(v8::Local<v8::Object>, 0);
-		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(Isolate::now().isolate));
 
 		hr = pInst->ensureIndex(v0, v1);
 

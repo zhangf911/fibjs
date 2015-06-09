@@ -182,7 +182,8 @@ function parserIDL(fname) {
 			"and": true,
 			"or": true,
 			"xor": true,
-			"new": true
+			"new": true,
+			"assert": true
 		};
 
 		return ckws.hasOwnProperty(fname) ? "_" + fname : fname;
@@ -190,7 +191,7 @@ function parserIDL(fname) {
 
 	function defMap(value) {
 		var defs = {
-			"undefined": "v8::Undefined(isolate)"
+			"undefined": "v8::Undefined(Isolate::now().isolate)"
 		};
 
 		return defs[value] || value;
@@ -580,13 +581,13 @@ function parserIDL(fname) {
 						value = "_" + value;
 					else if (value === '{') {
 						if (st[pos] == '}' && type === "Object") {
-							value = 'v8::Object::New(isolate)';
+							value = 'v8::Object::New(Isolate::now().isolate)';
 							pos++;
 						} else
 							reportErr();
 					} else if (value === '[') {
 						if (st[pos] == ']' && type === "Array") {
-							value = 'v8::Array::New(isolate)';
+							value = 'v8::Array::New(Isolate::now().isolate)';
 							pos++;
 						} else
 							reportErr();
@@ -730,9 +731,9 @@ function parserIDL(fname) {
 			if (!ids.hasOwnProperty(fname)) {
 				if (attr == "static") {
 					if (fname !== "_new")
-						difms.push("			{\"" + fname + "\", s_" + fname + "}");
+						difms.push("			{\"" + fname + "\", s_" + fname + ", true}");
 				} else
-					difms.push("			{\"" + fname + "\", s_" + fname + "}");
+					difms.push("			{\"" + fname + "\", s_" + fname + ", false}");
 			}
 
 			ids[fname] = [ftype, fnStr];
@@ -879,7 +880,7 @@ function parserIDL(fname) {
 						fnStr += "		v8::Local<v8::Boolean> vr;\n\n";
 						fnStr += "		PROPERTY_ENTER();\n		PROPERTY_INSTANCE(" + ns + "_base);\n\n";
 
-						fnStr += "		v8::String::Utf8Value k(property);\n		if(class_info().has(*k)){args.GetReturnValue().Set(v8::False(isolate));return;}\n\n"
+						fnStr += "		v8::String::Utf8Value k(property);\n		if(class_info().has(*k)){args.GetReturnValue().Set(v8::False(Isolate::now().isolate));return;}\n\n"
 						fnStr += "		hr = pInst->_named_deleter(*k, vr);\n		METHOD_RETURN1();\n	}\n";
 
 						ffs.push(fnStr)

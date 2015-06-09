@@ -94,7 +94,7 @@ result_t DBResult::every(v8::Local<v8::Function> func,
 }
 
 result_t DBResult::some(v8::Local<v8::Function> func,
-                         v8::Local<v8::Object> thisp, bool &retVal)
+                        v8::Local<v8::Object> thisp, bool &retVal)
 {
     if (!m_size)
         return CHECK_ERROR(CALL_E_INVALID_CALL);
@@ -131,9 +131,6 @@ result_t DBResult::map(v8::Local<v8::Function> func,
 
 result_t DBResult::toArray(v8::Local<v8::Array> &retVal)
 {
-    if (!m_size)
-        return CHECK_ERROR(CALL_E_INVALID_CALL);
-
     return m_array.toArray(retVal);
 }
 
@@ -142,12 +139,13 @@ result_t DBResult::toJSON(const char *key, v8::Local<v8::Value> &retVal)
     if (m_size)
         return m_array.toJSON(key, retVal);
 
-    v8::Local<v8::Object> o = v8::Object::New(isolate);
+    Isolate &isolate = Isolate::now();
+    v8::Local<v8::Object> o = v8::Object::New(isolate.isolate);
 
-    o->Set(v8::String::NewFromUtf8(isolate, "affected", v8::String::kNormalString, 8),
-           v8::Number::New(isolate, (double) m_affected));
-    o->Set(v8::String::NewFromUtf8(isolate, "insertId", v8::String::kNormalString, 8),
-           v8::Number::New(isolate, (double) m_insertId));
+    o->Set(v8::String::NewFromUtf8(isolate.isolate, "affected", v8::String::kNormalString, 8),
+           v8::Number::New(isolate.isolate, (double) m_affected));
+    o->Set(v8::String::NewFromUtf8(isolate.isolate, "insertId", v8::String::kNormalString, 8),
+           v8::Number::New(isolate.isolate, (double) m_insertId));
 
     retVal = o;
 

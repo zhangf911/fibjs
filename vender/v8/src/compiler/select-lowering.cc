@@ -6,8 +6,8 @@
 
 #include "src/compiler/common-operator.h"
 #include "src/compiler/diamond.h"
-#include "src/compiler/generic-node-inl.h"
 #include "src/compiler/graph.h"
+#include "src/compiler/node.h"
 
 namespace v8 {
 namespace internal {
@@ -62,7 +62,7 @@ Reduction SelectLowering::Reduce(Node* node) {
 bool SelectLowering::ReachableFrom(Node* const sink, Node* const source) {
   // TODO(turbofan): This is probably horribly expensive, and it should be moved
   // into node.h or somewhere else?!
-  Zone zone(graph()->zone()->isolate());
+  Zone zone;
   std::queue<Node*, NodeDeque> queue((NodeDeque(&zone)));
   BoolVector visited(graph()->NodeCount(), false, &zone);
   queue.push(source);

@@ -70,11 +70,11 @@ namespace fibjs
 	{
 		static ClassData::ClassMethod s_method[] = 
 		{
-			{"load", s_load},
-			{"loadFile", s_loadFile},
-			{"exportPem", s_exportPem},
-			{"exportDer", s_exportDer},
-			{"sign", s_sign}
+			{"load", s_load, false},
+			{"loadFile", s_loadFile, false},
+			{"exportPem", s_exportPem, false},
+			{"exportDer", s_exportDer, false},
+			{"sign", s_sign, false}
 		};
 
 		static ClassData::ClassProperty s_property[] = 
@@ -206,7 +206,7 @@ namespace fibjs
 
 		ARG(arg_string, 0);
 		ARG(obj_ptr<PKey_base>, 1);
-		OPT_ARG(v8::Local<v8::Object>, 2, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 2, v8::Object::New(Isolate::now().isolate));
 
 		hr = pInst->ac_sign(v0, v1, v2, vr);
 

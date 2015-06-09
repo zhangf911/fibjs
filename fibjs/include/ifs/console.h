@@ -64,7 +64,7 @@ public:
 	static result_t time(const char* label);
 	static result_t timeEnd(const char* label);
 	static result_t trace(const char* label);
-	static result_t assert(v8::Local<v8::Value> value, const char* msg);
+	static result_t _assert(v8::Local<v8::Value> value, const char* msg);
 	static result_t print(const char* fmt, const v8::FunctionCallbackInfo<v8::Value>& args);
 	static result_t print(const v8::FunctionCallbackInfo<v8::Value>& args);
 	static result_t readLine(const char* msg, std::string& retVal, exlib::AsyncEvent* ac);
@@ -114,23 +114,23 @@ namespace fibjs
 	{
 		static ClassData::ClassMethod s_method[] = 
 		{
-			{"add", s_add},
-			{"reset", s_reset},
-			{"log", s_log},
-			{"debug", s_debug},
-			{"info", s_info},
-			{"notice", s_notice},
-			{"warn", s_warn},
-			{"error", s_error},
-			{"crit", s_crit},
-			{"alert", s_alert},
-			{"dir", s_dir},
-			{"time", s_time},
-			{"timeEnd", s_timeEnd},
-			{"trace", s_trace},
-			{"assert", s_assert},
-			{"print", s_print},
-			{"readLine", s_readLine}
+			{"add", s_add, true},
+			{"reset", s_reset, true},
+			{"log", s_log, true},
+			{"debug", s_debug, true},
+			{"info", s_info, true},
+			{"notice", s_notice, true},
+			{"warn", s_warn, true},
+			{"error", s_error, true},
+			{"crit", s_crit, true},
+			{"alert", s_alert, true},
+			{"dir", s_dir, true},
+			{"time", s_time, true},
+			{"timeEnd", s_timeEnd, true},
+			{"trace", s_trace, true},
+			{"assert", s_assert, true},
+			{"print", s_print, true},
+			{"readLine", s_readLine, true}
 		};
 
 		static ClassData::ClassProperty s_property[] = 
@@ -451,7 +451,7 @@ namespace fibjs
 		ARG(v8::Local<v8::Value>, 0);
 		OPT_ARG(arg_string, 1, "");
 
-		hr = assert(v0, v1);
+		hr = _assert(v0, v1);
 
 		METHOD_VOID();
 	}

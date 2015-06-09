@@ -34,7 +34,7 @@ void Sampler::DoSample()
     state.pc = reinterpret_cast<Address>(pFiber->m_cntxt.Rip);
     state.sp = reinterpret_cast<Address>(pFiber->m_cntxt.Rsp);
     state.fp = reinterpret_cast<Address>(pFiber->m_cntxt.Rbp);
-#else
+#elif defined(x86)
     state.pc = reinterpret_cast<Address>(pFiber->m_cntxt.Eip);
     state.sp = reinterpret_cast<Address>(pFiber->m_cntxt.Esp);
     state.fp = reinterpret_cast<Address>(pFiber->m_cntxt.Ebp);
@@ -114,14 +114,9 @@ void Thread::SetThreadLocal(LocalStorageKey key, void *value)
     exlib::Fiber::tlsPut(static_cast<int>(key), value);
 }
 
-void Thread::YieldCPU()
+void OS::Sleep(TimeDelta interval)
 {
-    exlib::Fiber::yield();
-}
-
-void OS::Sleep(int milliseconds)
-{
-    exlib::Fiber::sleep(milliseconds);
+    exlib::Fiber::sleep(interval.InMicroseconds());
 }
 
 }

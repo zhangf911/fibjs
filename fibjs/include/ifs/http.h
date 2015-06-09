@@ -72,10 +72,10 @@ namespace fibjs
 	{
 		static ClassData::ClassMethod s_method[] = 
 		{
-			{"fileHandler", s_fileHandler},
-			{"request", s_request},
-			{"get", s_get},
-			{"post", s_post}
+			{"fileHandler", s_fileHandler, true},
+			{"request", s_request, true},
+			{"get", s_get, true},
+			{"post", s_post, true}
 		};
 
 		static ClassData::ClassObject s_object[] = 
@@ -107,7 +107,7 @@ namespace fibjs
 		METHOD_ENTER(2, 1);
 
 		ARG(arg_string, 0);
-		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(Isolate::now().isolate));
 
 		hr = fileHandler(v0, v1, vr);
 
@@ -129,7 +129,7 @@ namespace fibjs
 
 		ARG(arg_string, 0);
 		ARG(arg_string, 1);
-		OPT_ARG(v8::Local<v8::Object>, 2, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 2, v8::Object::New(Isolate::now().isolate));
 
 		hr = request(v0, v1, v2, vr);
 
@@ -138,7 +138,7 @@ namespace fibjs
 		ARG(arg_string, 0);
 		ARG(arg_string, 1);
 		ARG(obj_ptr<SeekableStream_base>, 2);
-		OPT_ARG(v8::Local<v8::Object>, 3, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 3, v8::Object::New(Isolate::now().isolate));
 
 		hr = request(v0, v1, v2, v3, vr);
 
@@ -147,7 +147,7 @@ namespace fibjs
 		ARG(arg_string, 0);
 		ARG(arg_string, 1);
 		ARG(obj_ptr<Buffer_base>, 2);
-		OPT_ARG(v8::Local<v8::Object>, 3, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 3, v8::Object::New(Isolate::now().isolate));
 
 		hr = request(v0, v1, v2, v3, vr);
 
@@ -161,7 +161,7 @@ namespace fibjs
 		METHOD_ENTER(2, 1);
 
 		ARG(arg_string, 0);
-		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 1, v8::Object::New(Isolate::now().isolate));
 
 		hr = get(v0, v1, vr);
 
@@ -176,7 +176,7 @@ namespace fibjs
 
 		ARG(arg_string, 0);
 		ARG(obj_ptr<SeekableStream_base>, 1);
-		OPT_ARG(v8::Local<v8::Object>, 2, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 2, v8::Object::New(Isolate::now().isolate));
 
 		hr = post(v0, v1, v2, vr);
 
@@ -184,7 +184,7 @@ namespace fibjs
 
 		ARG(arg_string, 0);
 		ARG(obj_ptr<Buffer_base>, 1);
-		OPT_ARG(v8::Local<v8::Object>, 2, v8::Object::New(isolate));
+		OPT_ARG(v8::Local<v8::Object>, 2, v8::Object::New(Isolate::now().isolate));
 
 		hr = post(v0, v1, v2, vr);
 

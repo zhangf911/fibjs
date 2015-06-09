@@ -1,3 +1,7 @@
+#include "src/v8.h"
+
+#if V8_TARGET_ARCH_ARM64
+
 // Copyright 2013 the V8 project authors. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -46,11 +50,25 @@ namespace internal {
 void CpuFeatures::ProbeImpl(bool cross_compile) {
   // AArch64 has no configuration options, no further probing is required.
   supported_ = 0;
+
+  // Only use statically determined features for cross compile (snapshot).
+  if (cross_compile) return;
+
+  // Probe for runtime features
+  base::CPU cpu;
+  if (cpu.implementer() == base::CPU::NVIDIA &&
+      cpu.variant() == base::CPU::NVIDIA_DENVER) {
+    supported_ |= 1u << COHERENT_CACHE;
+  }
 }
 
 
 void CpuFeatures::PrintTarget() { }
-void CpuFeatures::PrintFeatures() { }
+
+
+void CpuFeatures::PrintFeatures() {
+  printf("COHERENT_CACHE=%d\n", CpuFeatures::IsSupported(COHERENT_CACHE));
+}
 
 
 // -----------------------------------------------------------------------------
@@ -157,7 +175,7 @@ CPURegList CPURegList::GetSafepointSavedRegisters() {
 // -----------------------------------------------------------------------------
 // Implementation of RelocInfo
 
-const int RelocInfo::kApplyMask = 0;
+const int RelocInfo::kApplyMask = 1 << RelocInfo::INTERNAL_REFERENCE;
 
 
 bool RelocInfo::IsCodedSpecially() {
@@ -171,26 +189,6 @@ bool RelocInfo::IsCodedSpecially() {
 bool RelocInfo::IsInConstantPool() {
   Instruction* instr = reinterpret_cast<Instruction*>(pc_);
   return instr->IsLdrLiteralX();
-}
-
-
-void RelocInfo::PatchCode(byte* instructions, int instruction_count) {
-  // Patch the code at the current address with the supplied instructions.
-  Instr* pc = reinterpret_cast<Instr*>(pc_);
-  Instr* instr = reinterpret_cast<Instr*>(instructions);
-  for (int i = 0; i < instruction_count; i++) {
-    *(pc + i) = *(instr + i);
-  }
-
-  // Indicate that code has changed.
-  CpuFeatures::FlushICache(pc_, instruction_count * kInstructionSize);
-}
-
-
-// Patch the code at the current PC with a call to the target address.
-// Additional guard instructions can be added if required.
-void RelocInfo::PatchCodeWithCall(Address target, int guard_bytes) {
-  UNIMPLEMENTED();
 }
 
 
@@ -297,8 +295,8 @@ void ConstPool::RecordEntry(intptr_t data,
          mode != RelocInfo::STATEMENT_POSITION &&
          mode != RelocInfo::CONST_POOL &&
          mode != RelocInfo::VENEER_POOL &&
-         mode != RelocInfo::CODE_AGE_SEQUENCE);
-
+         mode != RelocInfo::CODE_AGE_SEQUENCE &&
+         mode != RelocInfo::DEOPT_REASON);
   uint64_t raw_data = static_cast<uint64_t>(data);
   int offset = assm_->pc_offset();
   if (IsEmpty()) {
@@ -576,6 +574,7 @@ void Assembler::Reset() {
 
 
 void Assembler::GetCode(CodeDesc* desc) {
+  reloc_info_writer.Finish();
   // Emit constant pool if necessary.
   CheckConstPool(true, false);
   DCHECK(constpool_.IsEmpty());
@@ -585,8 +584,9 @@ void Assembler::GetCode(CodeDesc* desc) {
     desc->buffer = reinterpret_cast<byte*>(buffer_);
     desc->buffer_size = buffer_size_;
     desc->instr_size = pc_offset();
-    desc->reloc_size = (reinterpret_cast<byte*>(buffer_) + buffer_size_) -
-                       reloc_info_writer.pos();
+    desc->reloc_size =
+        static_cast<int>((reinterpret_cast<byte*>(buffer_) + buffer_size_) -
+                         reloc_info_writer.pos());
     desc->origin = this;
   }
 }
@@ -603,12 +603,15 @@ void Assembler::Align(int m) {
 void Assembler::CheckLabelLinkChain(Label const * label) {
 #ifdef DEBUG
   if (label->is_linked()) {
-    int linkoffset = label->pos();
+    static const int kMaxLinksToCheck = 64;  // Avoid O(n2) behaviour.
+    int links_checked = 0;
+    int64_t linkoffset = label->pos();
     bool end_of_chain = false;
     while (!end_of_chain) {
+      if (++links_checked > kMaxLinksToCheck) break;
       Instruction * link = InstructionAt(linkoffset);
-      int linkpcoffset = link->ImmPCOffset();
-      int prevlinkoffset = linkoffset + linkpcoffset;
+      int64_t linkpcoffset = link->ImmPCOffset();
+      int64_t prevlinkoffset = linkoffset + linkpcoffset;
 
       end_of_chain = (linkoffset == prevlinkoffset);
       linkoffset = linkoffset + linkpcoffset;
@@ -647,7 +650,8 @@ void Assembler::RemoveBranchFromLabelLinkChain(Instruction* branch,
       // currently referring to this label.
       label->Unuse();
     } else {
-      label->link_to(reinterpret_cast<byte*>(next_link) - buffer_);
+      label->link_to(
+          static_cast<int>(reinterpret_cast<byte*>(next_link) - buffer_));
     }
 
   } else if (branch == next_link) {
@@ -723,7 +727,7 @@ void Assembler::bind(Label* label) {
   while (label->is_linked()) {
     int linkoffset = label->pos();
     Instruction* link = InstructionAt(linkoffset);
-    int prevlinkoffset = linkoffset + link->ImmPCOffset();
+    int prevlinkoffset = linkoffset + static_cast<int>(link->ImmPCOffset());
 
     CheckLabelLinkChain(label);
 
@@ -734,7 +738,15 @@ void Assembler::bind(Label* label) {
     DCHECK(prevlinkoffset >= 0);
 
     // Update the link to point to the label.
-    link->SetImmPCOffsetTarget(reinterpret_cast<Instruction*>(pc_));
+    if (link->IsUnresolvedInternalReference()) {
+      // Internal references do not get patched to an instruction but directly
+      // to an address.
+      internal_reference_positions_.push_back(linkoffset);
+      PatchingAssembler patcher(link, 2);
+      patcher.dc64(reinterpret_cast<uintptr_t>(pc_));
+    } else {
+      link->SetImmPCOffsetTarget(reinterpret_cast<Instruction*>(pc_));
+    }
 
     // Link the label to the previous link in the chain.
     if (linkoffset - prevlinkoffset == kStartOfLabelLinkChain) {
@@ -805,12 +817,13 @@ void Assembler::DeleteUnresolvedBranchInfoForLabelTraverse(Label* label) {
 
   while (!end_of_chain) {
     Instruction * link = InstructionAt(link_offset);
-    link_pcoffset = link->ImmPCOffset();
+    link_pcoffset = static_cast<int>(link->ImmPCOffset());
 
     // ADR instructions are not handled by veneers.
     if (link->IsImmBranch()) {
-      int max_reachable_pc = InstructionOffset(link) +
-          Instruction::ImmBranchRange(link->BranchType());
+      int max_reachable_pc =
+          static_cast<int>(InstructionOffset(link) +
+                           Instruction::ImmBranchRange(link->BranchType()));
       typedef std::multimap<int, FarBranchInfo>::iterator unresolved_info_it;
       std::pair<unresolved_info_it, unresolved_info_it> range;
       range = unresolved_branches_.equal_range(max_reachable_pc);
@@ -882,12 +895,12 @@ bool Assembler::IsConstantPoolAt(Instruction* instr) {
   // The constant pool marker is made of two instructions. These instructions
   // will never be emitted by the JIT, so checking for the first one is enough:
   // 0: ldr xzr, #<size of pool>
-  bool result = instr->IsLdrLiteralX() && (instr->Rt() == xzr.code());
+  bool result = instr->IsLdrLiteralX() && (instr->Rt() == kZeroRegCode);
 
   // It is still worth asserting the marker is complete.
   // 4: blr xzr
   DCHECK(!result || (instr->following()->IsBranchAndLinkToRegister() &&
-                     instr->following()->Rn() == xzr.code()));
+                     instr->following()->Rn() == kZeroRegCode));
 
   return result;
 }
@@ -903,7 +916,7 @@ int Assembler::ConstantPoolSizeAt(Instruction* instr) {
     const char* message =
         reinterpret_cast<const char*>(
             instr->InstructionAtOffset(kDebugMessageOffset));
-    int size = kDebugMessageOffset + strlen(message) + 1;
+    int size = static_cast<int>(kDebugMessageOffset + strlen(message) + 1);
     return RoundUp(size, kInstructionSize) / kInstructionSize;
   }
   // Same for printf support, see MacroAssembler::CallPrintf().
@@ -1593,9 +1606,11 @@ void Assembler::LoadStorePair(const CPURegister& rt,
   // 'rt' and 'rt2' can only be aliased for stores.
   DCHECK(((op & LoadStorePairLBit) == 0) || !rt.Is(rt2));
   DCHECK(AreSameSizeAndType(rt, rt2));
+  DCHECK(IsImmLSPair(addr.offset(), CalcLSPairDataSize(op)));
+  int offset = static_cast<int>(addr.offset());
 
   Instr memop = op | Rt(rt) | Rt2(rt2) | RnSP(addr.base()) |
-                ImmLSPair(addr.offset(), CalcLSPairDataSize(op));
+                ImmLSPair(offset, CalcLSPairDataSize(op));
 
   Instr addrmodeop;
   if (addr.IsImmediateOffset()) {
@@ -1639,11 +1654,11 @@ void Assembler::LoadStorePairNonTemporal(const CPURegister& rt,
   DCHECK(!rt.Is(rt2));
   DCHECK(AreSameSizeAndType(rt, rt2));
   DCHECK(addr.IsImmediateOffset());
-
   LSDataSize size = CalcLSPairDataSize(
     static_cast<LoadStorePairOp>(op & LoadStorePairMask));
-  Emit(op | Rt(rt) | Rt2(rt2) | RnSP(addr.base()) |
-       ImmLSPair(addr.offset(), size));
+  DCHECK(IsImmLSPair(addr.offset(), size));
+  int offset = static_cast<int>(addr.offset());
+  Emit(op | Rt(rt) | Rt2(rt2) | RnSP(addr.base()) | ImmLSPair(offset, size));
 }
 
 
@@ -2062,6 +2077,50 @@ void Assembler::ucvtf(const FPRegister& fd,
 }
 
 
+void Assembler::dcptr(Label* label) {
+  RecordRelocInfo(RelocInfo::INTERNAL_REFERENCE);
+  if (label->is_bound()) {
+    // The label is bound, so it does not need to be updated and the internal
+    // reference should be emitted.
+    //
+    // In this case, label->pos() returns the offset of the label from the
+    // start of the buffer.
+    internal_reference_positions_.push_back(pc_offset());
+    dc64(reinterpret_cast<uintptr_t>(buffer_ + label->pos()));
+  } else {
+    int32_t offset;
+    if (label->is_linked()) {
+      // The label is linked, so the internal reference should be added
+      // onto the end of the label's link chain.
+      //
+      // In this case, label->pos() returns the offset of the last linked
+      // instruction from the start of the buffer.
+      offset = label->pos() - pc_offset();
+      DCHECK(offset != kStartOfLabelLinkChain);
+    } else {
+      // The label is unused, so it now becomes linked and the internal
+      // reference is at the start of the new link chain.
+      offset = kStartOfLabelLinkChain;
+    }
+    // The instruction at pc is now the last link in the label's chain.
+    label->link_to(pc_offset());
+
+    // Traditionally the offset to the previous instruction in the chain is
+    // encoded in the instruction payload (e.g. branch range) but internal
+    // references are not instructions so while unbound they are encoded as
+    // two consecutive brk instructions. The two 16-bit immediates are used
+    // to encode the offset.
+    offset >>= kInstructionSizeLog2;
+    DCHECK(is_int32(offset));
+    uint32_t high16 = unsigned_bitextract_32(31, 16, offset);
+    uint32_t low16 = unsigned_bitextract_32(15, 0, offset);
+
+    brk(high16);
+    brk(low16);
+  }
+}
+
+
 // Note:
 // Below, a difference in case for the same letter indicates a
 // negated bit.
@@ -2087,13 +2146,13 @@ Instr Assembler::ImmFP64(double imm) {
   //       0000.0000.0000.0000.0000.0000.0000.0000
   uint64_t bits = double_to_rawbits(imm);
   // bit7: a000.0000
-  uint32_t bit7 = ((bits >> 63) & 0x1) << 7;
+  uint64_t bit7 = ((bits >> 63) & 0x1) << 7;
   // bit6: 0b00.0000
-  uint32_t bit6 = ((bits >> 61) & 0x1) << 6;
+  uint64_t bit6 = ((bits >> 61) & 0x1) << 6;
   // bit5_to_0: 00cd.efgh
-  uint32_t bit5_to_0 = (bits >> 48) & 0x3f;
+  uint64_t bit5_to_0 = (bits >> 48) & 0x3f;
 
-  return (bit7 | bit6 | bit5_to_0) << ImmFP_offset;
+  return static_cast<Instr>((bit7 | bit6 | bit5_to_0) << ImmFP_offset);
 }
 
 
@@ -2138,8 +2197,8 @@ void Assembler::MoveWide(const Register& rd,
 
   DCHECK(is_uint16(imm));
 
-  Emit(SF(rd) | MoveWideImmediateFixed | mov_op |
-       Rd(rd) | ImmMoveWide(imm) | ShiftMoveWide(shift));
+  Emit(SF(rd) | MoveWideImmediateFixed | mov_op | Rd(rd) |
+       ImmMoveWide(static_cast<int>(imm)) | ShiftMoveWide(shift));
 }
 
 
@@ -2155,7 +2214,7 @@ void Assembler::AddSub(const Register& rd,
     DCHECK(IsImmAddSub(immediate));
     Instr dest_reg = (S == SetFlags) ? Rd(rd) : RdSP(rd);
     Emit(SF(rd) | AddSubImmediateFixed | op | Flags(S) |
-         ImmAddSub(immediate) | dest_reg | RnSP(rn));
+         ImmAddSub(static_cast<int>(immediate)) | dest_reg | RnSP(rn));
   } else if (operand.IsShiftedRegister()) {
     DCHECK(operand.reg().SizeInBits() == rd.SizeInBits());
     DCHECK(operand.shift() != ROR);
@@ -2209,7 +2268,7 @@ void Assembler::brk(int code) {
 void Assembler::EmitStringData(const char* string) {
   size_t len = strlen(string) + 1;
   DCHECK(RoundUp(len, kInstructionSize) <= static_cast<size_t>(kGap));
-  EmitData(string, len);
+  EmitData(string, static_cast<int>(len));
   // Pad with NULL characters until pc_ is aligned.
   const char pad[] = {'\0', '\0', '\0', '\0'};
   STATIC_ASSERT(sizeof(pad) == kInstructionSize);
@@ -2312,7 +2371,8 @@ void Assembler::ConditionalCompare(const Register& rn,
   if (operand.IsImmediate()) {
     int64_t immediate = operand.ImmediateValue();
     DCHECK(IsImmConditionalCompare(immediate));
-    ccmpop = ConditionalCompareImmediateFixed | op | ImmCondCmp(immediate);
+    ccmpop = ConditionalCompareImmediateFixed | op |
+             ImmCondCmp(static_cast<unsigned>(immediate));
   } else {
     DCHECK(operand.IsShiftedRegister() && (operand.shift_amount() == 0));
     ccmpop = ConditionalCompareRegisterFixed | op | Rm(operand.reg());
@@ -2452,15 +2512,16 @@ void Assembler::LoadStore(const CPURegister& rt,
                           const MemOperand& addr,
                           LoadStoreOp op) {
   Instr memop = op | Rt(rt) | RnSP(addr.base());
-  int64_t offset = addr.offset();
 
   if (addr.IsImmediateOffset()) {
     LSDataSize size = CalcLSDataSize(op);
-    if (IsImmLSScaled(offset, size)) {
+    if (IsImmLSScaled(addr.offset(), size)) {
+      int offset = static_cast<int>(addr.offset());
       // Use the scaled addressing mode.
       Emit(LoadStoreUnsignedOffsetFixed | memop |
            ImmLSUnsigned(offset >> size));
-    } else if (IsImmLSUnscaled(offset)) {
+    } else if (IsImmLSUnscaled(addr.offset())) {
+      int offset = static_cast<int>(addr.offset());
       // Use the unscaled addressing mode.
       Emit(LoadStoreUnscaledOffsetFixed | memop | ImmLS(offset));
     } else {
@@ -2486,7 +2547,8 @@ void Assembler::LoadStore(const CPURegister& rt,
   } else {
     // Pre-index and post-index modes.
     DCHECK(!rt.Is(addr.base()));
-    if (IsImmLSUnscaled(offset)) {
+    if (IsImmLSUnscaled(addr.offset())) {
+      int offset = static_cast<int>(addr.offset());
       if (addr.IsPreIndex()) {
         Emit(LoadStorePreIndexFixed | memop | ImmLS(offset));
       } else {
@@ -2515,6 +2577,14 @@ bool Assembler::IsImmLSScaled(int64_t offset, LSDataSize size) {
 bool Assembler::IsImmLSPair(int64_t offset, LSDataSize size) {
   bool offset_is_size_multiple = (((offset >> size) << size) == offset);
   return offset_is_size_multiple && is_int7(offset >> size);
+}
+
+
+bool Assembler::IsImmLLiteral(int64_t offset) {
+  int inst_size = static_cast<int>(kInstructionSizeLog2);
+  bool offset_is_inst_multiple =
+      (((offset >> inst_size) << inst_size) == offset);
+  return offset_is_inst_multiple && is_intn(offset, ImmLLiteral_width);
 }
 
 
@@ -2799,7 +2869,8 @@ void Assembler::GrowBuffer() {
   desc.buffer = NewArray<byte>(desc.buffer_size);
 
   desc.instr_size = pc_offset();
-  desc.reloc_size = (buffer + buffer_size_) - reloc_info_writer.pos();
+  desc.reloc_size =
+      static_cast<int>((buffer + buffer_size_) - reloc_info_writer.pos());
 
   // Copy the data.
   intptr_t pc_delta = desc.buffer - buffer;
@@ -2821,6 +2892,12 @@ void Assembler::GrowBuffer() {
   // buffer nor pc absolute pointing inside the code buffer, so there is no need
   // to relocate any emitted relocation entries.
 
+  // Relocate internal references.
+  for (auto pos : internal_reference_positions_) {
+    intptr_t* p = reinterpret_cast<intptr_t*>(buffer_ + pos);
+    *p += pc_delta;
+  }
+
   // Pending relocation entries are also relative, no need to relocate.
 }
 
@@ -2830,13 +2907,17 @@ void Assembler::RecordRelocInfo(RelocInfo::Mode rmode, intptr_t data) {
   RelocInfo rinfo(reinterpret_cast<byte*>(pc_), rmode, data, NULL);
   if (((rmode >= RelocInfo::JS_RETURN) &&
        (rmode <= RelocInfo::DEBUG_BREAK_SLOT)) ||
+      (rmode == RelocInfo::INTERNAL_REFERENCE) ||
       (rmode == RelocInfo::CONST_POOL) ||
-      (rmode == RelocInfo::VENEER_POOL)) {
+      (rmode == RelocInfo::VENEER_POOL) ||
+      (rmode == RelocInfo::DEOPT_REASON)) {
     // Adjust code for new modes.
     DCHECK(RelocInfo::IsDebugBreakSlot(rmode)
            || RelocInfo::IsJSReturn(rmode)
            || RelocInfo::IsComment(rmode)
+           || RelocInfo::IsDeoptReason(rmode)
            || RelocInfo::IsPosition(rmode)
+           || RelocInfo::IsInternalReference(rmode)
            || RelocInfo::IsConstPool(rmode)
            || RelocInfo::IsVeneerPool(rmode));
     // These modes do not need an entry in the constant pool.
@@ -3005,7 +3086,7 @@ void Assembler::EmitVeneers(bool force_emit, bool need_protection, int margin) {
   }
 
   // Record the veneer pool size.
-  int pool_size = SizeOfCodeGeneratedSince(&size_check);
+  int pool_size = static_cast<int>(SizeOfCodeGeneratedSince(&size_check));
   RecordVeneerPool(veneer_pool_relocinfo_loc, pool_size);
 
   if (unresolved_branches_.empty()) {
@@ -3052,30 +3133,9 @@ void Assembler::CheckVeneerPool(bool force_emit, bool require_jump,
 }
 
 
-void Assembler::RecordComment(const char* msg) {
-  if (FLAG_code_comments) {
-    CheckBuffer();
-    RecordRelocInfo(RelocInfo::COMMENT, reinterpret_cast<intptr_t>(msg));
-  }
-}
-
-
 int Assembler::buffer_space() const {
-  return reloc_info_writer.pos() - reinterpret_cast<byte*>(pc_);
-}
-
-
-void Assembler::RecordJSReturn() {
-  positions_recorder()->WriteRecordedPositions();
-  CheckBuffer();
-  RecordRelocInfo(RelocInfo::JS_RETURN);
-}
-
-
-void Assembler::RecordDebugBreakSlot() {
-  positions_recorder()->WriteRecordedPositions();
-  CheckBuffer();
-  RecordRelocInfo(RelocInfo::DEBUG_BREAK_SLOT);
+  return static_cast<int>(reloc_info_writer.pos() -
+                          reinterpret_cast<byte*>(pc_));
 }
 
 
@@ -3134,5 +3194,8 @@ void PatchingAssembler::PatchAdrFar(int64_t target_offset) {
 
 
 } }  // namespace v8::internal
+
+#endif  // V8_TARGET_ARCH_ARM64
+
 
 #endif  // V8_TARGET_ARCH_ARM64

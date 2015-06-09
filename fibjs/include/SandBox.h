@@ -32,22 +32,25 @@ public:
     virtual result_t add(v8::Local<v8::Object> mods);
     virtual result_t addScript(const char *srcname, const char *script, v8::Local<v8::Value> &retVal);
     virtual result_t remove(const char *id);
+    virtual result_t clone(obj_ptr<SandBox_base> &retVal);
     virtual result_t run(const char *fname);
     virtual result_t require(const char *id, v8::Local<v8::Value> &retVal);
 
 public:
     v8::Local<v8::Object> mods()
     {
+        Isolate &isolate = Isolate::now();
+
         const char *mods_name = "_mods";
-        v8::Local<v8::Value> v = wrap()->GetHiddenValue(v8::String::NewFromUtf8(isolate, mods_name));
+        v8::Local<v8::Value> v = wrap()->GetHiddenValue(v8::String::NewFromUtf8(isolate.isolate, mods_name));
         v8::Local<v8::Object> o;
 
         if (!v.IsEmpty())
             o = v->ToObject();
         else
         {
-            o = v8::Object::New(isolate);
-            wrap()->SetHiddenValue(v8::String::NewFromUtf8(isolate, mods_name), o);
+            o = v8::Object::New(isolate.isolate);
+            wrap()->SetHiddenValue(v8::String::NewFromUtf8(isolate.isolate, mods_name), o);
         }
 
         return o;
@@ -56,7 +59,7 @@ public:
     void initRoot();
     void initRequire(v8::Local<v8::Function> func)
     {
-        mods()->SetHiddenValue(v8::String::NewFromUtf8(isolate, "require"), func);
+        mods()->SetHiddenValue(v8::String::NewFromUtf8(Isolate::now().isolate, "require"), func);
     }
 
     void InstallModule(std::string fname, v8::Local<v8::Value> o);

@@ -46,7 +46,7 @@ result_t HttpHandler_base::_new(v8::Local<v8::Value> hdlr,
 
     obj_ptr<HttpHandler> ht_hdlr = new HttpHandler();
     ht_hdlr->wrap(This);
-    ht_hdlr->setHandler(hdlr1);
+    ht_hdlr->set_handler(hdlr1);
 
     retVal = ht_hdlr;
 
@@ -59,12 +59,6 @@ HttpHandler::HttpHandler() :
 {
     m_stats = new Stats();
     m_stats->init(s_staticCounter, 2, s_Counter, 6);
-}
-
-void HttpHandler::setHandler(Handler_base *hdlr)
-{
-    wrap()->SetHiddenValue(v8::String::NewFromUtf8(isolate, "handler"), hdlr->wrap());
-    m_hdlr = hdlr;
 }
 
 static std::string s_crossdomain;
@@ -218,6 +212,18 @@ result_t HttpHandler::invoke(object_base *v, obj_ptr<Handler_base> &retVal,
                 pThis->m_pThis->m_stats->inc(HTTP_ERROR_404);
             else if (s == 500)
                 pThis->m_pThis->m_stats->inc(HTTP_ERROR_500);
+
+            std::string str;
+
+            pThis->m_req->get_method(str);
+            bool headOnly = !qstricmp(str.c_str(), "head");
+
+            if (headOnly)
+            {
+                pThis->set(end);
+                pThis->m_rep->set_keepAlive(false);
+                return pThis->m_rep->sendHeader(pThis->m_stm, pThis);
+            }
 
             int64_t len;
 
@@ -433,6 +439,7 @@ result_t HttpHandler::get_handler(obj_ptr<Handler_base> &retVal)
 
 result_t HttpHandler::set_handler(Handler_base *newVal)
 {
+    wrap()->SetHiddenValue(v8::String::NewFromUtf8(Isolate::now().isolate, "handler"), newVal->wrap());
     m_hdlr = newVal;
     return 0;
 }

@@ -1,3 +1,7 @@
+#include "src/v8.h"
+
+#if V8_TARGET_ARCH_ARM64
+
 // Copyright 2013 the V8 project authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -74,7 +78,7 @@ int CountSetBits(uint64_t value, int width) {
   value = ((value >> 16) & 0x0000ffff0000ffff) + (value & 0x0000ffff0000ffff);
   value = ((value >> 32) & 0x00000000ffffffff) + (value & 0x00000000ffffffff);
 
-  return value;
+  return static_cast<int>(value);
 }
 
 
@@ -90,5 +94,8 @@ int MaskToBit(uint64_t mask) {
 
 
 } }  // namespace v8::internal
+
+#endif  // V8_TARGET_ARCH_ARM64
+
 
 #endif  // V8_TARGET_ARCH_ARM64

@@ -18,12 +18,34 @@
 namespace exlib
 {
 
+class spinlock
+{
+public:
+    spinlock() {
+
+    }
+
+public:
+    void lock()
+    {
+        while (m_atom.CompareAndSwap(0, -1));
+    }
+
+    void unlock()
+    {
+        m_atom.xchg(0);
+    }
+
+private:
+    atomic m_atom;
+};
+
 template<typename T>
 class lockfree
 {
 public:
     lockfree() :
-        m_first(0), m_lock(0)
+        m_first(0)
     {
     }
 
@@ -34,28 +56,32 @@ public:
 
     void put(T *o)
     {
-        while (CompareAndSwap(&m_lock, 0, -1));
+        assert(o->m_next == NULL);
+
+        m_lock.lock();
 
         o->m_next = m_first;
         m_first = o;
 
-        atom_xchg(&m_lock, 0);
+        m_lock.unlock();
     }
 
     T *get()
     {
         T *p;
 
-        while (CompareAndSwap(&m_lock, 0, -1));
+        m_lock.lock();
 
         p = m_first;
         if (p)
         {
             m_first = (T *)p->m_next;
             p->m_next = 0;
+
+            assert(p != m_first);
         }
 
-        atom_xchg(&m_lock, 0);
+        m_lock.unlock();
         return p;
     }
 
@@ -63,12 +89,13 @@ public:
     {
         T *p;
 
-        while (CompareAndSwap(&m_lock, 0, -1));
+        m_lock.lock();
 
         p = m_first;
         m_first = 0;
 
-        atom_xchg(&m_lock, 0);
+
+        m_lock.unlock();
         return p;
     }
 
@@ -114,7 +141,7 @@ private:
 
 private:
     T *volatile  m_first;
-    volatile int32_t m_lock;
+    spinlock m_lock;
 };
 
 }

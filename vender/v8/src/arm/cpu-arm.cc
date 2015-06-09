@@ -1,3 +1,7 @@
+#include "src/v8.h"
+
+#if V8_TARGET_ARCH_ARM
+
 // Copyright 2006-2009 the V8 project authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -27,6 +31,8 @@ namespace internal {
 void CpuFeatures::FlushICache(void* start, size_t size) {
   if (size == 0) return;
 
+  if (CpuFeatures::IsSupported(COHERENT_CACHE)) return;
+
 #if defined(USE_SIMULATOR)
   // Not generating ARM instructions for C-code. This means that we are
   // building an ARM emulator based target.  We should notify the simulator
@@ -43,6 +49,18 @@ void CpuFeatures::FlushICache(void* start, size_t size) {
   register uint32_t end asm("r1") = beg + size;
   register uint32_t flg asm("r2") = 0;
 
+#ifdef __clang__
+  // This variant of the asm avoids a constant pool entry, which can be
+  // problematic when LTO'ing. It is also slightly shorter.
+  register uint32_t scno asm("r7") = __ARM_NR_cacheflush;
+
+  asm volatile("svc 0\n"
+               :
+               : "r"(beg), "r"(end), "r"(flg), "r"(scno)
+               : "memory");
+#else
+  // Use a different variant of the asm with GCC because some versions doesn't
+  // support r7 as an asm input.
   asm volatile(
     // This assembly works for both ARM and Thumb targets.
 
@@ -60,8 +78,12 @@ void CpuFeatures::FlushICache(void* start, size_t size) {
     : "r" (beg), "r" (end), "r" (flg), [scno] "i" (__ARM_NR_cacheflush)
     : "memory");
 #endif
+#endif
 }
 
 } }  // namespace v8::internal
+
+#endif  // V8_TARGET_ARCH_ARM
+
 
 #endif  // V8_TARGET_ARCH_ARM

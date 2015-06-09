@@ -91,6 +91,12 @@ HeapObject* HeapObjectIterator::FromCurrentPage() {
     int obj_size = (size_func_ == NULL) ? obj->Size() : size_func_(obj);
     cur_addr_ += obj_size;
     DCHECK(cur_addr_ <= cur_end_);
+    // TODO(hpayer): Remove the debugging code.
+    if (cur_addr_ > cur_end_) {
+      space_->heap()->isolate()->PushStackTraceAndDie(0xaaaaaaaa, obj, NULL,
+                                                      obj_size);
+    }
+
     if (!obj->IsFiller()) {
       DCHECK_OBJECT_SIZE(obj_size);
       return obj;
@@ -200,8 +206,8 @@ void MemoryChunk::UpdateHighWaterMark(Address mark) {
 
 
 PointerChunkIterator::PointerChunkIterator(Heap* heap)
-    : state_(kOldPointerState),
-      old_pointer_iterator_(heap->old_pointer_space()),
+    : state_(kOldSpaceState),
+      old_iterator_(heap->old_space()),
       map_iterator_(heap->map_space()),
       lo_iterator_(heap->lo_space()) {}
 
@@ -244,8 +250,34 @@ HeapObject* PagedSpace::AllocateLinearly(int size_in_bytes) {
 }
 
 
+HeapObject* PagedSpace::AllocateLinearlyAligned(int size_in_bytes,
+                                                AllocationAlignment alignment) {
+  Address current_top = allocation_info_.top();
+  int alignment_size = 0;
+
+  if (alignment == kDoubleAligned &&
+      (OffsetFrom(current_top) & kDoubleAlignmentMask) != 0) {
+    alignment_size = kPointerSize;
+    size_in_bytes += alignment_size;
+  } else if (alignment == kDoubleUnaligned &&
+             (OffsetFrom(current_top) & kDoubleAlignmentMask) == 0) {
+    alignment_size = kPointerSize;
+    size_in_bytes += alignment_size;
+  }
+  Address new_top = current_top + size_in_bytes;
+  if (new_top > allocation_info_.limit()) return NULL;
+
+  allocation_info_.set_top(new_top);
+  if (alignment_size > 0) {
+    return heap()->EnsureAligned(HeapObject::FromAddress(current_top),
+                                 size_in_bytes, alignment);
+  }
+  return HeapObject::FromAddress(current_top);
+}
+
+
 // Raw allocation.
-AllocationResult PagedSpace::AllocateRaw(int size_in_bytes) {
+AllocationResult PagedSpace::AllocateRawUnaligned(int size_in_bytes) {
   HeapObject* object = AllocateLinearly(size_in_bytes);
 
   if (object == NULL) {
@@ -267,15 +299,92 @@ AllocationResult PagedSpace::AllocateRaw(int size_in_bytes) {
 }
 
 
+// Raw allocation.
+AllocationResult PagedSpace::AllocateRawAligned(int size_in_bytes,
+                                                AllocationAlignment alignment) {
+  DCHECK(identity() == OLD_SPACE);
+  HeapObject* object = AllocateLinearlyAligned(size_in_bytes, alignment);
+  int aligned_size_in_bytes = size_in_bytes + kPointerSize;
+
+  if (object == NULL) {
+    object = free_list_.Allocate(aligned_size_in_bytes);
+    if (object == NULL) {
+      object = SlowAllocateRaw(aligned_size_in_bytes);
+    }
+    if (object != NULL) {
+      object = heap()->EnsureAligned(object, aligned_size_in_bytes, alignment);
+    }
+  }
+
+  if (object != NULL) {
+    MSAN_ALLOCATED_UNINITIALIZED_MEMORY(object->address(), size_in_bytes);
+    return object;
+  }
+
+  return AllocationResult::Retry(identity());
+}
+
+
+AllocationResult PagedSpace::AllocateRaw(int size_in_bytes,
+                                         AllocationAlignment alignment) {
+#ifdef V8_HOST_ARCH_32_BIT
+  return alignment == kDoubleAligned
+             ? AllocateRawAligned(size_in_bytes, kDoubleAligned)
+             : AllocateRawUnaligned(size_in_bytes);
+#else
+  return AllocateRawUnaligned(size_in_bytes);
+#endif
+}
+
+
 // -----------------------------------------------------------------------------
 // NewSpace
 
 
-AllocationResult NewSpace::AllocateRaw(int size_in_bytes) {
+AllocationResult NewSpace::AllocateRawAligned(int size_in_bytes,
+                                              AllocationAlignment alignment) {
+  Address old_top = allocation_info_.top();
+  int alignment_size = 0;
+  int aligned_size_in_bytes = 0;
+
+  // If double alignment is required and top pointer is not aligned, we allocate
+  // additional memory to take care of the alignment.
+  if (alignment == kDoubleAligned &&
+      (OffsetFrom(old_top) & kDoubleAlignmentMask) != 0) {
+    alignment_size += kPointerSize;
+  } else if (alignment == kDoubleUnaligned &&
+             (OffsetFrom(old_top) & kDoubleAlignmentMask) == 0) {
+    alignment_size += kPointerSize;
+  }
+  aligned_size_in_bytes = size_in_bytes + alignment_size;
+
+  if (allocation_info_.limit() - old_top < aligned_size_in_bytes) {
+    return SlowAllocateRaw(size_in_bytes, alignment);
+  }
+
+  HeapObject* obj = HeapObject::FromAddress(old_top);
+  allocation_info_.set_top(allocation_info_.top() + aligned_size_in_bytes);
+  DCHECK_SEMISPACE_ALLOCATION_INFO(allocation_info_, to_space_);
+
+  if (alignment_size > 0) {
+    obj = heap()->PrecedeWithFiller(obj);
+  }
+
+  // The slow path above ultimately goes through AllocateRaw, so this suffices.
+  MSAN_ALLOCATED_UNINITIALIZED_MEMORY(obj->address(), size_in_bytes);
+
+  DCHECK((kDoubleAligned && (OffsetFrom(obj) & kDoubleAlignmentMask) == 0) ||
+         (kDoubleUnaligned && (OffsetFrom(obj) & kDoubleAlignmentMask) != 0));
+
+  return obj;
+}
+
+
+AllocationResult NewSpace::AllocateRawUnaligned(int size_in_bytes) {
   Address old_top = allocation_info_.top();
 
   if (allocation_info_.limit() - old_top < size_in_bytes) {
-    return SlowAllocateRaw(size_in_bytes);
+    return SlowAllocateRaw(size_in_bytes, kWordAligned);
   }
 
   HeapObject* obj = HeapObject::FromAddress(old_top);
@@ -289,6 +398,18 @@ AllocationResult NewSpace::AllocateRaw(int size_in_bytes) {
 }
 
 
+AllocationResult NewSpace::AllocateRaw(int size_in_bytes,
+                                       AllocationAlignment alignment) {
+#ifdef V8_HOST_ARCH_32_BIT
+  return alignment == kDoubleAligned
+             ? AllocateRawAligned(size_in_bytes, kDoubleAligned)
+             : AllocateRawUnaligned(size_in_bytes);
+#else
+  return AllocateRawUnaligned(size_in_bytes);
+#endif
+}
+
+
 LargePage* LargePage::Initialize(Heap* heap, MemoryChunk* chunk) {
   heap->incremental_marking()->SetOldSpacePageFlags(chunk);
   return static_cast<LargePage*>(chunk);
@@ -299,14 +420,6 @@ intptr_t LargeObjectSpace::Available() {
   return ObjectSizeFor(heap()->isolate()->memory_allocator()->Available());
 }
 
-
-bool FreeListNode::IsFreeListNode(HeapObject* object) {
-  Map* map = object->map();
-  Heap* heap = object->GetHeap();
-  return map == heap->raw_unchecked_free_space_map() ||
-         map == heap->raw_unchecked_one_pointer_filler_map() ||
-         map == heap->raw_unchecked_two_pointer_filler_map();
-}
 }
 }  // namespace v8::internal
 

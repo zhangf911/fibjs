@@ -19,21 +19,37 @@ struct JSOperatorGlobalCache;
 
 // Defines the arity and the call flags for a JavaScript function call. This is
 // used as a parameter by JSCallFunction operators.
-class CallFunctionParameters FINAL {
+class CallFunctionParameters final {
  public:
-  CallFunctionParameters(size_t arity, CallFunctionFlags flags)
-      : arity_(arity), flags_(flags) {}
+  CallFunctionParameters(size_t arity, CallFunctionFlags flags,
+                         LanguageMode language_mode)
+      : bit_field_(ArityField::encode(arity) | FlagsField::encode(flags) |
+                   LanguageModeField::encode(language_mode)) {}
 
-  size_t arity() const { return arity_; }
-  CallFunctionFlags flags() const { return flags_; }
+  size_t arity() const { return ArityField::decode(bit_field_); }
+  CallFunctionFlags flags() const { return FlagsField::decode(bit_field_); }
+  LanguageMode language_mode() const {
+    return LanguageModeField::decode(bit_field_);
+  }
+
+  bool operator==(CallFunctionParameters const& that) const {
+    return this->bit_field_ == that.bit_field_;
+  }
+  bool operator!=(CallFunctionParameters const& that) const {
+    return !(*this == that);
+  }
 
  private:
-  const size_t arity_;
-  const CallFunctionFlags flags_;
-};
+  friend size_t hash_value(CallFunctionParameters const& p) {
+    return p.bit_field_;
+  }
 
-bool operator==(CallFunctionParameters const&, CallFunctionParameters const&);
-bool operator!=(CallFunctionParameters const&, CallFunctionParameters const&);
+  typedef BitField<size_t, 0, 28> ArityField;
+  typedef BitField<CallFunctionFlags, 28, 2> FlagsField;
+  typedef BitField<LanguageMode, 30, 2> LanguageModeField;
+
+  const uint32_t bit_field_;
+};
 
 size_t hash_value(CallFunctionParameters const&);
 
@@ -44,7 +60,7 @@ const CallFunctionParameters& CallFunctionParametersOf(const Operator* op);
 
 // Defines the arity and the ID for a runtime function call. This is used as a
 // parameter by JSCallRuntime operators.
-class CallRuntimeParameters FINAL {
+class CallRuntimeParameters final {
  public:
   CallRuntimeParameters(Runtime::FunctionId id, size_t arity)
       : id_(id), arity_(arity) {}
@@ -70,7 +86,7 @@ const CallRuntimeParameters& CallRuntimeParametersOf(const Operator* op);
 // Defines the location of a context slot relative to a specific scope. This is
 // used as a parameter by JSLoadContext and JSStoreContext operators and allows
 // accessing a context-allocated variable without keeping track of the scope.
-class ContextAccess FINAL {
+class ContextAccess final {
  public:
   ContextAccess(size_t depth, size_t index, bool immutable);
 
@@ -117,11 +133,11 @@ bool operator==(VectorSlotPair const& lhs, VectorSlotPair const& rhs);
 
 // Defines the property being loaded from an object by a named load. This is
 // used as a parameter by JSLoadNamed operators.
-class LoadNamedParameters FINAL {
+class LoadNamedParameters final {
  public:
   LoadNamedParameters(const Unique<Name>& name, const VectorSlotPair& feedback,
                       ContextualMode contextual_mode)
-      : name_(name), contextual_mode_(contextual_mode), feedback_(feedback) {}
+      : name_(name), feedback_(feedback), contextual_mode_(contextual_mode) {}
 
   const Unique<Name>& name() const { return name_; }
   ContextualMode contextual_mode() const { return contextual_mode_; }
@@ -130,8 +146,8 @@ class LoadNamedParameters FINAL {
 
  private:
   const Unique<Name> name_;
-  const ContextualMode contextual_mode_;
   const VectorSlotPair feedback_;
+  const ContextualMode contextual_mode_;
 };
 
 bool operator==(LoadNamedParameters const&, LoadNamedParameters const&);
@@ -146,7 +162,7 @@ const LoadNamedParameters& LoadNamedParametersOf(const Operator* op);
 
 // Defines the property being loaded from an object. This is
 // used as a parameter by JSLoadProperty operators.
-class LoadPropertyParameters FINAL {
+class LoadPropertyParameters final {
  public:
   explicit LoadPropertyParameters(const VectorSlotPair& feedback)
       : feedback_(feedback) {}
@@ -169,16 +185,16 @@ const LoadPropertyParameters& LoadPropertyParametersOf(const Operator* op);
 
 // Defines the property being stored to an object by a named store. This is
 // used as a parameter by JSStoreNamed operators.
-class StoreNamedParameters FINAL {
+class StoreNamedParameters final {
  public:
-  StoreNamedParameters(StrictMode strict_mode, const Unique<Name>& name)
-      : strict_mode_(strict_mode), name_(name) {}
+  StoreNamedParameters(LanguageMode language_mode, const Unique<Name>& name)
+      : language_mode_(language_mode), name_(name) {}
 
-  StrictMode strict_mode() const { return strict_mode_; }
+  LanguageMode language_mode() const { return language_mode_; }
   const Unique<Name>& name() const { return name_; }
 
  private:
-  const StrictMode strict_mode_;
+  const LanguageMode language_mode_;
   const Unique<Name> name_;
 };
 
@@ -192,10 +208,36 @@ std::ostream& operator<<(std::ostream&, StoreNamedParameters const&);
 const StoreNamedParameters& StoreNamedParametersOf(const Operator* op);
 
 
+// Defines shared information for the closure that should be created. This is
+// used as a parameter by JSCreateClosure operators.
+class CreateClosureParameters final {
+ public:
+  CreateClosureParameters(Handle<SharedFunctionInfo> shared_info,
+                          PretenureFlag pretenure)
+      : shared_info_(shared_info), pretenure_(pretenure) {}
+
+  Handle<SharedFunctionInfo> shared_info() const { return shared_info_; }
+  PretenureFlag pretenure() const { return pretenure_; }
+
+ private:
+  const Handle<SharedFunctionInfo> shared_info_;
+  const PretenureFlag pretenure_;
+};
+
+bool operator==(CreateClosureParameters const&, CreateClosureParameters const&);
+bool operator!=(CreateClosureParameters const&, CreateClosureParameters const&);
+
+size_t hash_value(CreateClosureParameters const&);
+
+std::ostream& operator<<(std::ostream&, CreateClosureParameters const&);
+
+const CreateClosureParameters& CreateClosureParametersOf(const Operator* op);
+
+
 // Interface for building JavaScript-level operators, e.g. directly from the
 // AST. Most operators have no parameters, thus can be globally shared for all
 // graphs.
-class JSOperatorBuilder FINAL : public ZoneObject {
+class JSOperatorBuilder final : public ZoneObject {
  public:
   explicit JSOperatorBuilder(Zone* zone);
 
@@ -203,21 +245,21 @@ class JSOperatorBuilder FINAL : public ZoneObject {
   const Operator* NotEqual();
   const Operator* StrictEqual();
   const Operator* StrictNotEqual();
-  const Operator* LessThan();
-  const Operator* GreaterThan();
-  const Operator* LessThanOrEqual();
-  const Operator* GreaterThanOrEqual();
-  const Operator* BitwiseOr();
-  const Operator* BitwiseXor();
-  const Operator* BitwiseAnd();
-  const Operator* ShiftLeft();
-  const Operator* ShiftRight();
-  const Operator* ShiftRightLogical();
-  const Operator* Add();
-  const Operator* Subtract();
-  const Operator* Multiply();
-  const Operator* Divide();
-  const Operator* Modulus();
+  const Operator* LessThan(LanguageMode language_mode);
+  const Operator* GreaterThan(LanguageMode language_mode);
+  const Operator* LessThanOrEqual(LanguageMode language_mode);
+  const Operator* GreaterThanOrEqual(LanguageMode language_mode);
+  const Operator* BitwiseOr(LanguageMode language_mode);
+  const Operator* BitwiseXor(LanguageMode language_mode);
+  const Operator* BitwiseAnd(LanguageMode language_mode);
+  const Operator* ShiftLeft(LanguageMode language_mode);
+  const Operator* ShiftRight(LanguageMode language_mode);
+  const Operator* ShiftRightLogical(LanguageMode language_mode);
+  const Operator* Add(LanguageMode language_mode);
+  const Operator* Subtract(LanguageMode language_mode);
+  const Operator* Multiply(LanguageMode language_mode);
+  const Operator* Divide(LanguageMode language_mode);
+  const Operator* Modulus(LanguageMode language_mode);
 
   const Operator* UnaryNot();
   const Operator* ToBoolean();
@@ -228,8 +270,13 @@ class JSOperatorBuilder FINAL : public ZoneObject {
   const Operator* Yield();
 
   const Operator* Create();
+  const Operator* CreateClosure(Handle<SharedFunctionInfo> shared_info,
+                                PretenureFlag pretenure);
+  const Operator* CreateLiteralArray(int literal_flags);
+  const Operator* CreateLiteralObject(int literal_flags);
 
-  const Operator* CallFunction(size_t arity, CallFunctionFlags flags);
+  const Operator* CallFunction(size_t arity, CallFunctionFlags flags,
+                               LanguageMode language_mode);
   const Operator* CallRuntime(Runtime::FunctionId id, size_t arity);
 
   const Operator* CallConstruct(int arguments);
@@ -239,10 +286,11 @@ class JSOperatorBuilder FINAL : public ZoneObject {
                             const VectorSlotPair& feedback,
                             ContextualMode contextual_mode = NOT_CONTEXTUAL);
 
-  const Operator* StoreProperty(StrictMode strict_mode);
-  const Operator* StoreNamed(StrictMode strict_mode, const Unique<Name>& name);
+  const Operator* StoreProperty(LanguageMode language_mode);
+  const Operator* StoreNamed(LanguageMode language_mode,
+                             const Unique<Name>& name);
 
-  const Operator* DeleteProperty(StrictMode strict_mode);
+  const Operator* DeleteProperty(LanguageMode language_mode);
 
   const Operator* HasProperty();
 
@@ -251,7 +299,8 @@ class JSOperatorBuilder FINAL : public ZoneObject {
 
   const Operator* TypeOf();
   const Operator* InstanceOf();
-  const Operator* Debugger();
+
+  const Operator* StackCheck();
 
   // TODO(titzer): nail down the static parts of each of these context flavors.
   const Operator* CreateFunctionContext();
@@ -259,7 +308,7 @@ class JSOperatorBuilder FINAL : public ZoneObject {
   const Operator* CreateWithContext();
   const Operator* CreateBlockContext();
   const Operator* CreateModuleContext();
-  const Operator* CreateGlobalContext();
+  const Operator* CreateScriptContext();
 
  private:
   Zone* zone() const { return zone_; }

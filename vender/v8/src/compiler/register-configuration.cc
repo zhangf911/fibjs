@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include "src/compiler/register-configuration.h"
+#include "src/globals.h"
 #include "src/macro-assembler.h"
 
 namespace v8 {
@@ -45,7 +46,7 @@ class ArchDefaultRegisterConfiguration : public RegisterConfiguration {
 static base::LazyInstance<ArchDefaultRegisterConfiguration>::type
     kDefaultRegisterConfiguration = LAZY_INSTANCE_INITIALIZER;
 
-}  // namepace
+}  // namespace
 
 
 const RegisterConfiguration* RegisterConfiguration::ArchDefault() {

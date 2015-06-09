@@ -5,6 +5,7 @@
  *      Author: lion
  */
 
+#include "ifs/fs.h"
 #include "ifs/crypto.h"
 #include "PKey.h"
 #include "Cipher.h"
@@ -39,7 +40,7 @@ void PKey::clear()
 result_t PKey::genRsaKey(int32_t size, exlib::AsyncEvent *ac)
 {
     if (size < 128 || size > 8192)
-        return CHECK_ERROR(Runtime::setError("Invalid key size"));
+        return CHECK_ERROR(Runtime::setError("PKey: Invalid key size"));
 
     if (switchToAsync(ac))
         return CHECK_ERROR(CALL_E_NOSYNC);
@@ -69,7 +70,7 @@ result_t PKey::genEcKey(const char *curve, exlib::AsyncEvent *ac)
     const ecp_curve_info *curve_info;
     curve_info = ecp_curve_info_from_name(curve);
     if (curve_info == NULL)
-        return CHECK_ERROR(Runtime::setError("Unknown curve"));
+        return CHECK_ERROR(Runtime::setError("PKey: Unknown curve"));
 
     int ret;
 
@@ -276,6 +277,32 @@ result_t PKey::importKey(const char *pemKey, const char *password)
 
     if (ret == POLARSSL_ERR_PK_KEY_INVALID_FORMAT)
         ret = pk_parse_public_key(&m_key, (unsigned char *)pemKey, qstrlen(pemKey));
+
+    if (ret != 0)
+        return CHECK_ERROR(_ssl::setError(ret));
+
+    return 0;
+}
+
+result_t PKey::importFile(const char* filename, const char* password)
+{
+    result_t hr;
+    std::string data;
+    int ret;
+
+    hr = fs_base::ac_readFile(filename, data);
+    if (hr < 0)
+        return hr;
+
+    clear();
+
+    ret = pk_parse_key(&m_key, (const unsigned char *)data.c_str(),
+                       data.length(), *password ? (unsigned char *)password : NULL,
+                       qstrlen(password));
+
+    if (ret == POLARSSL_ERR_PK_KEY_INVALID_FORMAT)
+        ret = pk_parse_public_key(&m_key, (const unsigned char *)data.c_str(),
+                                  data.length());
 
     if (ret != 0)
         return CHECK_ERROR(_ssl::setError(ret));

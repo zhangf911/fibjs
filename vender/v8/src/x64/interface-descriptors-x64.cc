@@ -1,3 +1,7 @@
+#include "src/v8.h"
+
+#if V8_TARGET_ARCH_X64
+
 // Copyright 2012 the V8 project authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -16,17 +20,21 @@ const Register CallInterfaceDescriptor::ContextRegister() { return rsi; }
 
 const Register LoadDescriptor::ReceiverRegister() { return rdx; }
 const Register LoadDescriptor::NameRegister() { return rcx; }
+const Register LoadDescriptor::SlotRegister() { return rax; }
 
 
-const Register VectorLoadICTrampolineDescriptor::SlotRegister() { return rax; }
-
-
-const Register VectorLoadICDescriptor::VectorRegister() { return rbx; }
+const Register LoadWithVectorDescriptor::VectorRegister() { return rbx; }
 
 
 const Register StoreDescriptor::ReceiverRegister() { return rdx; }
 const Register StoreDescriptor::NameRegister() { return rcx; }
 const Register StoreDescriptor::ValueRegister() { return rax; }
+
+
+const Register VectorStoreICTrampolineDescriptor::SlotRegister() { return rdi; }
+
+
+const Register VectorStoreICDescriptor::VectorRegister() { return rbx; }
 
 
 const Register StoreTransitionDescriptor::MapRegister() { return rbx; }
@@ -56,6 +64,10 @@ const Register MathPowIntegerDescriptor::exponent() {
 }
 
 
+const Register GrowArrayElementsDescriptor::ObjectRegister() { return rax; }
+const Register GrowArrayElementsDescriptor::KeyRegister() { return rbx; }
+
+
 void FastNewClosureDescriptor::Initialize(CallInterfaceDescriptorData* data) {
   Register registers[] = {rsi, rbx};
   data->Initialize(arraysize(registers), registers, NULL);
@@ -64,6 +76,12 @@ void FastNewClosureDescriptor::Initialize(CallInterfaceDescriptorData* data) {
 
 void FastNewContextDescriptor::Initialize(CallInterfaceDescriptorData* data) {
   Register registers[] = {rsi, rdi};
+  data->Initialize(arraysize(registers), registers, NULL);
+}
+
+
+void TypeofDescriptor::Initialize(CallInterfaceDescriptorData* data) {
+  Register registers[] = {rsi, rbx};
   data->Initialize(arraysize(registers), registers, NULL);
 }
 
@@ -101,7 +119,19 @@ void FastCloneShallowObjectDescriptor::Initialize(
 void CreateAllocationSiteDescriptor::Initialize(
     CallInterfaceDescriptorData* data) {
   Register registers[] = {rsi, rbx, rdx};
-  data->Initialize(arraysize(registers), registers, NULL);
+  Representation representations[] = {Representation::Tagged(),
+                                      Representation::Tagged(),
+                                      Representation::Smi()};
+  data->Initialize(arraysize(registers), registers, representations);
+}
+
+
+void CreateWeakCellDescriptor::Initialize(CallInterfaceDescriptorData* data) {
+  Register registers[] = {rsi, rbx, rdx, rdi};
+  Representation representations[] = {
+      Representation::Tagged(), Representation::Tagged(), Representation::Smi(),
+      Representation::Tagged()};
+  data->Initialize(arraysize(registers), registers, representations);
 }
 
 
@@ -124,6 +154,16 @@ void CallFunctionWithFeedbackDescriptor::Initialize(
   Representation representations[] = {Representation::Tagged(),
                                       Representation::Tagged(),
                                       Representation::Smi()};
+  data->Initialize(arraysize(registers), registers, representations);
+}
+
+
+void CallFunctionWithFeedbackAndVectorDescriptor::Initialize(
+    CallInterfaceDescriptorData* data) {
+  Register registers[] = {rsi, rdi, rdx, rbx};
+  Representation representations[] = {
+      Representation::Tagged(), Representation::Tagged(), Representation::Smi(),
+      Representation::Tagged()};
   data->Initialize(arraysize(registers), registers, representations);
 }
 
@@ -204,6 +244,12 @@ void InternalArrayConstructorDescriptor::Initialize(
                                       Representation::Tagged(),
                                       Representation::Integer32()};
   data->Initialize(arraysize(registers), registers, representations);
+}
+
+
+void CompareDescriptor::Initialize(CallInterfaceDescriptorData* data) {
+  Register registers[] = {rsi, rdx, rax};
+  data->Initialize(arraysize(registers), registers, NULL);
 }
 
 
@@ -297,7 +343,28 @@ void ArgumentAdaptorDescriptor::Initialize(CallInterfaceDescriptorData* data) {
 void ApiFunctionDescriptor::Initialize(CallInterfaceDescriptorData* data) {
   Register registers[] = {
       rsi,  // context
-      rax,  // callee
+      rdi,  // callee
+      rbx,  // call_data
+      rcx,  // holder
+      rdx,  // api_function_address
+      rax,  // actual number of arguments
+  };
+  Representation representations[] = {
+      Representation::Tagged(),     // context
+      Representation::Tagged(),     // callee
+      Representation::Tagged(),     // call_data
+      Representation::Tagged(),     // holder
+      Representation::External(),   // api_function_address
+      Representation::Integer32(),  // actual number of arguments
+  };
+  data->Initialize(arraysize(registers), registers, representations);
+}
+
+
+void ApiAccessorDescriptor::Initialize(CallInterfaceDescriptorData* data) {
+  Register registers[] = {
+      rsi,  // context
+      rdi,  // callee
       rbx,  // call_data
       rcx,  // holder
       rdx,  // api_function_address
@@ -311,7 +378,25 @@ void ApiFunctionDescriptor::Initialize(CallInterfaceDescriptorData* data) {
   };
   data->Initialize(arraysize(registers), registers, representations);
 }
+
+
+void MathRoundVariantDescriptor::Initialize(CallInterfaceDescriptorData* data) {
+  Register registers[] = {
+      rsi,  // context
+      rdi,  // math rounding function
+      rdx,  // vector slot id
+  };
+  Representation representations[] = {
+      Representation::Tagged(),  //
+      Representation::Tagged(),  //
+      Representation::Tagged(),  //
+  };
+  data->Initialize(arraysize(registers), registers, representations);
+}
 }
 }  // namespace v8::internal
+
+#endif  // V8_TARGET_ARCH_X64
+
 
 #endif  // V8_TARGET_ARCH_X64

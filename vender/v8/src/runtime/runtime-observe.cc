@@ -5,6 +5,7 @@
 #include "src/v8.h"
 
 #include "src/arguments.h"
+#include "src/debug.h"
 #include "src/runtime/runtime-utils.h"
 
 namespace v8 {
@@ -63,6 +64,18 @@ RUNTIME_FUNCTION(Runtime_DeliverObservationChangeRecords) {
   // we make a call inside a verbose TryCatch.
   catcher.SetVerbose(true);
   Handle<Object> argv[] = {argument};
+
+  // Allow stepping into the observer callback.
+  Debug* debug = isolate->debug();
+  if (debug->is_active() && debug->IsStepping() &&
+      debug->last_step_action() == StepIn) {
+    // Previous StepIn may have activated a StepOut if it was at the frame exit.
+    // In this case to be able to step into the callback again, we need to clear
+    // the step out first.
+    debug->ClearStepOut();
+    debug->FloodWithOneShot(callback);
+  }
+
   USE(Execution::Call(isolate, callback, isolate->factory()->undefined_value(),
                       arraysize(argv), argv));
   if (isolate->has_pending_exception()) {
@@ -75,8 +88,9 @@ RUNTIME_FUNCTION(Runtime_DeliverObservationChangeRecords) {
 
 
 RUNTIME_FUNCTION(Runtime_GetObservationState) {
-  SealHandleScope shs(isolate);
+  HandleScope scope(isolate);
   DCHECK(args.length() == 0);
+  isolate->CountUsage(v8::Isolate::kObjectObserve);
   return isolate->heap()->observation_state();
 }
 
@@ -143,5 +157,5 @@ RUNTIME_FUNCTION(Runtime_GetObjectContextNotifierPerformChange) {
   Handle<Context> context(object_info->GetCreationContext(), isolate);
   return context->native_object_notifier_perform_change();
 }
-}
-}  // namespace v8::internal
+}  // namespace internal
+}  // namespace v8

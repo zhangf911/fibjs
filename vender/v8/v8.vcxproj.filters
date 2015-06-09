@@ -25,11 +25,20 @@
     <Filter Include="Source Files\compiler\ia32">
       <UniqueIdentifier>{afd14b90-34a2-9841-1aad-7fccf917eda4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\compiler\ppc">
+      <UniqueIdentifier>{747a3f26-b765-b376-aaaf-3d94438790ba}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source Files\compiler\x64">
       <UniqueIdentifier>{7e4db021-7f1c-d574-294e-09b6102be2dd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\d8.xcodeproj">
+      <UniqueIdentifier>{21b6a2cb-ceaf-378e-a76c-933ad5762d5c}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source Files\extensions">
       <UniqueIdentifier>{799570e2-a10f-51ed-083a-05a77b0687f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gen">
+      <UniqueIdentifier>{1050797c-185f-d58a-6936-837871f7749c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\heap">
       <UniqueIdentifier>{4ada9795-970e-476b-ea26-c93a5cd3800b}</UniqueIdentifier>
@@ -43,6 +52,9 @@
     <Filter Include="Source Files\ic\ia32">
       <UniqueIdentifier>{6602bd0f-4c9a-7aa6-4b75-d8433dffae53}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ic\ppc">
+      <UniqueIdentifier>{d6e99f08-7d31-eb33-b832-c0eb174f373a}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source Files\ic\x64">
       <UniqueIdentifier>{7e4c29af-711e-18fb-353a-9dc159584321}</UniqueIdentifier>
     </Filter>
@@ -52,8 +64,14 @@
     <Filter Include="Source Files\libplatform">
       <UniqueIdentifier>{d55c839e-d9e9-0541-edc0-1b7cf01a3405}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ppc">
+      <UniqueIdentifier>{b1b3c0c3-7b01-ce70-48fd-66ced6e79f09}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source Files\runtime">
       <UniqueIdentifier>{103f0e8f-8587-2131-6779-fa0e8e7a0c4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\snapshot">
+      <UniqueIdentifier>{b807bda9-b184-8f62-a640-92e0b3402f98}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\third_party">
       <UniqueIdentifier>{517d88ea-d211-bcd7-bc22-b7165eec24c6}</UniqueIdentifier>
@@ -102,6 +120,9 @@
     <ClInclude Include="include\v8-util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\v8-version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="include\v8.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -118,6 +139,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\allocation.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\api-natives.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\api.h">
@@ -147,6 +171,9 @@
     <ClInclude Include="src\bailout-reason.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\base\adapters.h">
+      <Filter>Source Files\base</Filter>
+    </ClInclude>
     <ClInclude Include="src\base\atomicops.h">
       <Filter>Source Files\base</Filter>
     </ClInclude>
@@ -169,6 +196,9 @@
       <Filter>Source Files\base</Filter>
     </ClInclude>
     <ClInclude Include="src\base\atomicops_internals_portable.h">
+      <Filter>Source Files\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\atomicops_internals_ppc_gcc.h">
       <Filter>Source Files\base</Filter>
     </ClInclude>
     <ClInclude Include="src\base\atomicops_internals_tsan.h">
@@ -199,6 +229,9 @@
       <Filter>Source Files\base</Filter>
     </ClInclude>
     <ClInclude Include="src\base\functional.h">
+      <Filter>Source Files\base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\iterator.h">
       <Filter>Source Files\base</Filter>
     </ClInclude>
     <ClInclude Include="src\base\lazy-instance.h">
@@ -309,6 +342,9 @@
     <ClInclude Include="src\compilation-cache.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\compilation-dependencies.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\compilation-statistics.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -316,6 +352,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\access-builder.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="src\compiler\all-nodes.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\ast-graph-builder.h">
@@ -339,10 +378,19 @@
     <ClInclude Include="src\compiler\common-node-cache.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
+    <ClInclude Include="src\compiler\common-operator-reducer.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
     <ClInclude Include="src\compiler\common-operator.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\control-builders.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="src\compiler\control-equivalence.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="src\compiler\control-flow-optimizer.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\control-reducer.h">
@@ -351,31 +399,19 @@
     <ClInclude Include="src\compiler\diamond.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
+    <ClInclude Include="src\compiler\frame-elider.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="src\compiler\frame-states.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
     <ClInclude Include="src\compiler\frame.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\gap-resolver.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
-    <ClInclude Include="src\compiler\generic-algorithm-inl.h">
-      <Filter>Source Files\compiler</Filter>
-    </ClInclude>
-    <ClInclude Include="src\compiler\generic-algorithm.h">
-      <Filter>Source Files\compiler</Filter>
-    </ClInclude>
-    <ClInclude Include="src\compiler\generic-graph.h">
-      <Filter>Source Files\compiler</Filter>
-    </ClInclude>
-    <ClInclude Include="src\compiler\generic-node-inl.h">
-      <Filter>Source Files\compiler</Filter>
-    </ClInclude>
-    <ClInclude Include="src\compiler\generic-node.h">
-      <Filter>Source Files\compiler</Filter>
-    </ClInclude>
     <ClInclude Include="src\compiler\graph-builder.h">
-      <Filter>Source Files\compiler</Filter>
-    </ClInclude>
-    <ClInclude Include="src\compiler\graph-inl.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\graph-reducer.h">
@@ -420,19 +456,37 @@
     <ClInclude Include="src\compiler\js-inlining.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
-    <ClInclude Include="src\compiler\js-intrinsic-builder.h">
+    <ClInclude Include="src\compiler\js-intrinsic-lowering.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\js-operator.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
+    <ClInclude Include="src\compiler\js-type-feedback.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
     <ClInclude Include="src\compiler\js-typed-lowering.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="src\compiler\jump-threading.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\linkage-impl.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\linkage.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="src\compiler\liveness-analyzer.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="src\compiler\load-elimination.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="src\compiler\loop-analysis.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="src\compiler\loop-peeling.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\machine-operator-reducer.h">
@@ -444,7 +498,7 @@
     <ClInclude Include="src\compiler\machine-type.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
-    <ClInclude Include="src\compiler\node-aux-data-inl.h">
+    <ClInclude Include="src\compiler\move-optimizer.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\node-aux-data.h">
@@ -453,10 +507,10 @@
     <ClInclude Include="src\compiler\node-cache.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
-    <ClInclude Include="src\compiler\node-matchers.h">
+    <ClInclude Include="src\compiler\node-marker.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
-    <ClInclude Include="src\compiler\node-properties-inl.h">
+    <ClInclude Include="src\compiler\node-matchers.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\node-properties.h">
@@ -468,16 +522,13 @@
     <ClInclude Include="src\compiler\opcodes.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
-    <ClInclude Include="src\compiler\operator-properties-inl.h">
-      <Filter>Source Files\compiler</Filter>
-    </ClInclude>
     <ClInclude Include="src\compiler\operator-properties.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\operator.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
-    <ClInclude Include="src\compiler\phi-reducer.h">
+    <ClInclude Include="src\compiler\osr.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\pipeline-statistics.h">
@@ -485,6 +536,9 @@
     </ClInclude>
     <ClInclude Include="src\compiler\pipeline.h">
       <Filter>Source Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="src\compiler\ppc\instruction-codes-ppc.h">
+      <Filter>Source Files\compiler\ppc</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\raw-machine-assembler.h">
       <Filter>Source Files\compiler</Filter>
@@ -520,6 +574,12 @@
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\source-position.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="src\compiler\state-values-utils.h">
+      <Filter>Source Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="src\compiler\tail-call-optimization.h">
       <Filter>Source Files\compiler</Filter>
     </ClInclude>
     <ClInclude Include="src\compiler\typer.h">
@@ -682,6 +742,9 @@
       <Filter>Source Files\heap</Filter>
     </ClInclude>
     <ClInclude Include="src\heap\heap.h">
+      <Filter>Source Files\heap</Filter>
+    </ClInclude>
+    <ClInclude Include="src\heap\identity-map.h">
       <Filter>Source Files\heap</Filter>
     </ClInclude>
     <ClInclude Include="src\heap\incremental-marking-inl.h">
@@ -858,13 +921,7 @@
     <ClInclude Include="src\interface-descriptors.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\interface.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\interpreter-irregexp.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\isolate-inl.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\isolate.h">
@@ -880,6 +937,12 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\jsregexp.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\layout-descriptor-inl.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\layout-descriptor.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\libplatform\default-platform.h">
@@ -936,10 +999,10 @@
     <ClInclude Include="src\messages.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\msan.h">
+    <ClInclude Include="src\modules.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\natives.h">
+    <ClInclude Include="src\msan.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\objects-inl.h">
@@ -948,7 +1011,7 @@
     <ClInclude Include="src\objects.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\optimizing-compiler-thread.h">
+    <ClInclude Include="src\optimizing-compile-dispatcher.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ostreams.h">
@@ -957,8 +1020,47 @@
     <ClInclude Include="src\parser.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\pending-compilation-error-handler.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\perf-jit.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ppc\assembler-ppc-inl.h">
+      <Filter>Source Files\ppc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ppc\assembler-ppc.h">
+      <Filter>Source Files\ppc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ppc\code-stubs-ppc.h">
+      <Filter>Source Files\ppc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ppc\codegen-ppc.h">
+      <Filter>Source Files\ppc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ppc\constants-ppc.h">
+      <Filter>Source Files\ppc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ppc\frames-ppc.h">
+      <Filter>Source Files\ppc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ppc\lithium-codegen-ppc.h">
+      <Filter>Source Files\ppc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ppc\lithium-gap-resolver-ppc.h">
+      <Filter>Source Files\ppc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ppc\lithium-ppc.h">
+      <Filter>Source Files\ppc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ppc\macro-assembler-ppc.h">
+      <Filter>Source Files\ppc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ppc\regexp-macro-assembler-ppc.h">
+      <Filter>Source Files\ppc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ppc\simulator-ppc.h">
+      <Filter>Source Files\ppc</Filter>
     </ClInclude>
     <ClInclude Include="src\preparse-data-format.h">
       <Filter>Source Files</Filter>
@@ -976,9 +1078,6 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\profile-generator.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\property-details-inl.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\property-details.h">
@@ -1017,9 +1116,6 @@
     <ClInclude Include="src\runtime\runtime.h">
       <Filter>Source Files\runtime</Filter>
     </ClInclude>
-    <ClInclude Include="src\runtime\string-builder.h">
-      <Filter>Source Files\runtime</Filter>
-    </ClInclude>
     <ClInclude Include="src\safepoint-table.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -1038,7 +1134,7 @@
     <ClInclude Include="src\scopes.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\serialize.h">
+    <ClInclude Include="src\signature.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\simulator.h">
@@ -1050,11 +1146,17 @@
     <ClInclude Include="src\smart-pointers.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\snapshot-source-sink.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="src\snapshot\natives.h">
+      <Filter>Source Files\snapshot</Filter>
     </ClInclude>
-    <ClInclude Include="src\snapshot.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="src\snapshot\serialize.h">
+      <Filter>Source Files\snapshot</Filter>
+    </ClInclude>
+    <ClInclude Include="src\snapshot\snapshot-source-sink.h">
+      <Filter>Source Files\snapshot</Filter>
+    </ClInclude>
+    <ClInclude Include="src\snapshot\snapshot.h">
+      <Filter>Source Files\snapshot</Filter>
     </ClInclude>
     <ClInclude Include="src\splay-tree-inl.h">
       <Filter>Source Files</Filter>
@@ -1062,10 +1164,19 @@
     <ClInclude Include="src\splay-tree.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\startup-data-util.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\string-builder.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\string-search.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\string-stream.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\strings-storage.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\strtod.h">
@@ -1123,9 +1234,6 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\unique.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utils-inl.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\utils.h">
@@ -1227,9 +1335,6 @@
     <ClInclude Include="src\zone-containers.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\zone-inl.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\zone.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -1245,6 +1350,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\allocation.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\api-natives.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\api.cc">
@@ -1302,6 +1410,9 @@
       <Filter>Source Files\base\platform</Filter>
     </ClCompile>
     <ClCompile Include="src\base\platform\mutex.cc">
+      <Filter>Source Files\base\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="src\base\platform\platform-aix.cc">
       <Filter>Source Files\base\platform</Filter>
     </ClCompile>
     <ClCompile Include="src\base\platform\platform-fiber.cc">
@@ -1382,6 +1493,9 @@
     <ClCompile Include="src\compilation-cache.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\compilation-dependencies.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\compilation-statistics.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1389,6 +1503,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\compiler\access-builder.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\all-nodes.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
     <ClCompile Include="src\compiler\ast-graph-builder.cc">
@@ -1406,19 +1523,34 @@
     <ClCompile Include="src\compiler\code-generator.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
+    <ClCompile Include="src\compiler\common-node-cache.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\common-operator-reducer.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
     <ClCompile Include="src\compiler\common-operator.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
     <ClCompile Include="src\compiler\control-builders.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
+    <ClCompile Include="src\compiler\control-equivalence.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\control-flow-optimizer.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
     <ClCompile Include="src\compiler\control-reducer.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
-    <ClCompile Include="src\compiler\gap-resolver.cc">
+    <ClCompile Include="src\compiler\frame-elider.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
-    <ClCompile Include="src\compiler\graph-builder.cc">
+    <ClCompile Include="src\compiler\frame-states.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\gap-resolver.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
     <ClCompile Include="src\compiler\graph-reducer.cc">
@@ -1463,16 +1595,34 @@
     <ClCompile Include="src\compiler\js-inlining.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
-    <ClCompile Include="src\compiler\js-intrinsic-builder.cc">
+    <ClCompile Include="src\compiler\js-intrinsic-lowering.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
     <ClCompile Include="src\compiler\js-operator.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
+    <ClCompile Include="src\compiler\js-type-feedback.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
     <ClCompile Include="src\compiler\js-typed-lowering.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
+    <ClCompile Include="src\compiler\jump-threading.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
     <ClCompile Include="src\compiler\linkage.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\liveness-analyzer.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\load-elimination.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\loop-analysis.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\loop-peeling.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
     <ClCompile Include="src\compiler\machine-operator-reducer.cc">
@@ -1484,13 +1634,34 @@
     <ClCompile Include="src\compiler\machine-type.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
+    <ClCompile Include="src\compiler\move-optimizer.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
     <ClCompile Include="src\compiler\node-cache.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\node-marker.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\node-matchers.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\node-properties.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
     <ClCompile Include="src\compiler\node.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
+    <ClCompile Include="src\compiler\opcodes.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\operator-properties.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
     <ClCompile Include="src\compiler\operator.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\osr.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
     <ClCompile Include="src\compiler\pipeline-statistics.cc">
@@ -1498,6 +1669,15 @@
     </ClCompile>
     <ClCompile Include="src\compiler\pipeline.cc">
       <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\ppc\code-generator-ppc.cc">
+      <Filter>Source Files\compiler\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\ppc\instruction-selector-ppc.cc">
+      <Filter>Source Files\compiler\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\ppc\linkage-ppc.cc">
+      <Filter>Source Files\compiler\ppc</Filter>
     </ClCompile>
     <ClCompile Include="src\compiler\raw-machine-assembler.cc">
       <Filter>Source Files\compiler</Filter>
@@ -1530,6 +1710,12 @@
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
     <ClCompile Include="src\compiler\source-position.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\state-values-utils.cc">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="src\compiler\tail-call-optimization.cc">
       <Filter>Source Files\compiler</Filter>
     </ClCompile>
     <ClCompile Include="src\compiler\typer.cc">
@@ -1595,9 +1781,6 @@
     <ClCompile Include="src\execution.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\experimental-libraries.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\extensions\externalize-string-extension.cc">
       <Filter>Source Files\extensions</Filter>
     </ClCompile>
@@ -1637,6 +1820,15 @@
     <ClCompile Include="src\gdb-jit.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\gen\experimental-libraries.cc">
+      <Filter>Source Files\gen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gen\extras-libraries.cc">
+      <Filter>Source Files\gen</Filter>
+    </ClCompile>
+    <ClCompile Include="src\gen\libraries.cc">
+      <Filter>Source Files\gen</Filter>
+    </ClCompile>
     <ClCompile Include="src\global-handles.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1656,6 +1848,9 @@
       <Filter>Source Files\heap</Filter>
     </ClCompile>
     <ClCompile Include="src\heap\heap.cc">
+      <Filter>Source Files\heap</Filter>
+    </ClCompile>
+    <ClCompile Include="src\heap\identity-map.cc">
       <Filter>Source Files\heap</Filter>
     </ClCompile>
     <ClCompile Include="src\heap\incremental-marking.cc">
@@ -1832,6 +2027,21 @@
     <ClCompile Include="src\ic\ic.cc">
       <Filter>Source Files\ic</Filter>
     </ClCompile>
+    <ClCompile Include="src\ic\ppc\access-compiler-ppc.cc">
+      <Filter>Source Files\ic\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ic\ppc\handler-compiler-ppc.cc">
+      <Filter>Source Files\ic\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ic\ppc\ic-compiler-ppc.cc">
+      <Filter>Source Files\ic\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ic\ppc\ic-ppc.cc">
+      <Filter>Source Files\ic\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ic\ppc\stub-cache-ppc.cc">
+      <Filter>Source Files\ic\ppc</Filter>
+    </ClCompile>
     <ClCompile Include="src\ic\stub-cache.cc">
       <Filter>Source Files\ic</Filter>
     </ClCompile>
@@ -1871,9 +2081,6 @@
     <ClCompile Include="src\interface-descriptors.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\interface.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\interpreter-irregexp.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1881,6 +2088,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\jsregexp.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\layout-descriptor.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\libplatform\default-platform.cc">
@@ -1891,9 +2101,6 @@
     </ClCompile>
     <ClCompile Include="src\libplatform\worker-thread.cc">
       <Filter>Source Files\libplatform</Filter>
-    </ClCompile>
-    <ClCompile Include="src\libraries.cc">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\lithium-allocator.cc">
       <Filter>Source Files</Filter>
@@ -1919,6 +2126,9 @@
     <ClCompile Include="src\messages.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\modules.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\objects-debug.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1928,7 +2138,7 @@
     <ClCompile Include="src\objects.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\optimizing-compiler-thread.cc">
+    <ClCompile Include="src\optimizing-compile-dispatcher.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ostreams.cc">
@@ -1937,8 +2147,68 @@
     <ClCompile Include="src\parser.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\pattern-rewriter.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pending-compilation-error-handler.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\perf-jit.cc">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\assembler-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\builtins-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\code-stubs-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\codegen-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\constants-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\cpu-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\debug-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\deoptimizer-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\disasm-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\frames-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\full-codegen-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\interface-descriptors-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\lithium-codegen-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\lithium-gap-resolver-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\lithium-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\macro-assembler-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\regexp-macro-assembler-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ppc\simulator-ppc.cc">
+      <Filter>Source Files\ppc</Filter>
     </ClCompile>
     <ClCompile Include="src\preparse-data.cc">
       <Filter>Source Files</Filter>
@@ -1972,9 +2242,6 @@
     </ClCompile>
     <ClCompile Include="src\runtime-profiler.cc">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\runtime\runtime-api.cc">
-      <Filter>Source Files\runtime</Filter>
     </ClCompile>
     <ClCompile Include="src\runtime\runtime-array.cc">
       <Filter>Source Files\runtime</Filter>
@@ -2072,22 +2339,31 @@
     <ClCompile Include="src\scopes.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\serialize.cc">
+    <ClCompile Include="src\snapshot\serialize.cc">
+      <Filter>Source Files\snapshot</Filter>
+    </ClCompile>
+    <ClCompile Include="src\snapshot\snapshot-common.cc">
+      <Filter>Source Files\snapshot</Filter>
+    </ClCompile>
+    <ClCompile Include="src\snapshot\snapshot-empty.cc">
+      <Filter>Source Files\snapshot</Filter>
+    </ClCompile>
+    <ClCompile Include="src\snapshot\snapshot-source-sink.cc">
+      <Filter>Source Files\snapshot</Filter>
+    </ClCompile>
+    <ClCompile Include="src\startup-data-util.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\snapshot-common.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\snapshot-empty.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\snapshot-source-sink.cc">
+    <ClCompile Include="src\string-builder.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\string-search.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\string-stream.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\strings-storage.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\strtod.cc">

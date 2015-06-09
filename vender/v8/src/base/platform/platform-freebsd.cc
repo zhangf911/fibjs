@@ -72,54 +72,6 @@ void* OS::Allocate(const size_t requested,
 }
 
 
-class PosixMemoryMappedFile : public OS::MemoryMappedFile {
- public:
-  PosixMemoryMappedFile(FILE* file, void* memory, int size)
-    : file_(file), memory_(memory), size_(size) { }
-  virtual ~PosixMemoryMappedFile();
-  virtual void* memory() { return memory_; }
-  virtual int size() { return size_; }
- private:
-  FILE* file_;
-  void* memory_;
-  int size_;
-};
-
-
-OS::MemoryMappedFile* OS::MemoryMappedFile::open(const char* name) {
-  FILE* file = fopen(name, "r+");
-  if (file == NULL) return NULL;
-
-  fseek(file, 0, SEEK_END);
-  int size = ftell(file);
-
-  void* memory =
-      mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(file), 0);
-  return new PosixMemoryMappedFile(file, memory, size);
-}
-
-
-OS::MemoryMappedFile* OS::MemoryMappedFile::create(const char* name, int size,
-    void* initial) {
-  FILE* file = fopen(name, "w+");
-  if (file == NULL) return NULL;
-  int result = fwrite(initial, size, 1, file);
-  if (result < 1) {
-    fclose(file);
-    return NULL;
-  }
-  void* memory =
-      mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fileno(file), 0);
-  return new PosixMemoryMappedFile(file, memory, size);
-}
-
-
-PosixMemoryMappedFile::~PosixMemoryMappedFile() {
-  if (memory_) munmap(memory_, size_);
-  fclose(file_);
-}
-
-
 static unsigned StringToLong(char* buffer) {
   return static_cast<unsigned>(strtol(buffer, NULL, 16));  // NOLINT
 }
@@ -145,21 +97,21 @@ std::vector<OS::SharedLibraryAddress> OS::GetSharedLibraryAddresses() {
     if (bytes_read < 8) break;
     unsigned end = StringToLong(addr_buffer);
     char buffer[MAP_LENGTH];
-    int bytes_pos = -1;
+    bytes_read = -1;
     do {
-      bytes_pos++;
-      if (bytes_pos >= MAP_LENGTH - 1)
+      bytes_read++;
+      if (bytes_read >= MAP_LENGTH - 1)
         break;
-      bytes_pos = read(fd, buffer + bytes_pos, 1);
-      if (bytes_pos < 1) break;
-    } while (buffer[bytes_pos] != '\n');
-    buffer[bytes_pos] = 0;
+      bytes_read = read(fd, buffer + bytes_read, 1);
+      if (bytes_read < 1) break;
+    } while (buffer[bytes_read] != '\n');
+    buffer[bytes_read] = 0;
     // Ignore mappings that are not executable.
     if (buffer[3] != 'x') continue;
     char* start_of_path = index(buffer, '/');
     // There may be no filename in this line.  Skip to next.
     if (start_of_path == NULL) continue;
-    buffer[bytes_pos] = 0;
+    buffer[bytes_read] = 0;
     result.push_back(SharedLibraryAddress(start_of_path, start, end));
   }
   close(fd);
@@ -192,7 +144,7 @@ VirtualMemory::VirtualMemory(size_t size, size_t alignment)
   void* reservation = mmap(OS::GetRandomMmapAddr(),
                            request_size,
                            PROT_NONE,
-                           MAP_PRIVATE | MAP_ANON | MAP_NORESERVE,
+                           MAP_PRIVATE | MAP_ANON,
                            kMmapFd,
                            kMmapFdOffset);
   if (reservation == MAP_FAILED) return;
@@ -264,7 +216,7 @@ void* VirtualMemory::ReserveRegion(size_t size) {
   void* result = mmap(OS::GetRandomMmapAddr(),
                       size,
                       PROT_NONE,
-                      MAP_PRIVATE | MAP_ANON | MAP_NORESERVE,
+                      MAP_PRIVATE | MAP_ANON,
                       kMmapFd,
                       kMmapFdOffset);
 
@@ -292,7 +244,7 @@ bool VirtualMemory::UncommitRegion(void* base, size_t size) {
   return mmap(base,
               size,
               PROT_NONE,
-              MAP_PRIVATE | MAP_ANON | MAP_NORESERVE | MAP_FIXED,
+              MAP_PRIVATE | MAP_ANON | MAP_FIXED,
               kMmapFd,
               kMmapFdOffset) != MAP_FAILED;
 }

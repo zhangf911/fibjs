@@ -82,9 +82,11 @@ enum BindingFlags {
   V(STRING_FUNCTION_PROTOTYPE_MAP_INDEX, Map, string_function_prototype_map)   \
   V(SYMBOL_FUNCTION_INDEX, JSFunction, symbol_function)                        \
   V(OBJECT_FUNCTION_INDEX, JSFunction, object_function)                        \
+  V(JS_OBJECT_STRONG_MAP_INDEX, Map, js_object_strong_map)                     \
   V(INTERNAL_ARRAY_FUNCTION_INDEX, JSFunction, internal_array_function)        \
   V(ARRAY_FUNCTION_INDEX, JSFunction, array_function)                          \
   V(JS_ARRAY_MAPS_INDEX, Object, js_array_maps)                                \
+  V(JS_ARRAY_STRONG_MAPS_INDEX, Object, js_array_strong_maps)                  \
   V(DATE_FUNCTION_INDEX, JSFunction, date_function)                            \
   V(JSON_OBJECT_INDEX, JSObject, json_object)                                  \
   V(REGEXP_FUNCTION_INDEX, JSFunction, regexp_function)                        \
@@ -98,10 +100,11 @@ enum BindingFlags {
   V(TO_INTEGER_FUN_INDEX, JSFunction, to_integer_fun)                          \
   V(TO_UINT32_FUN_INDEX, JSFunction, to_uint32_fun)                            \
   V(TO_INT32_FUN_INDEX, JSFunction, to_int32_fun)                              \
+  V(TO_LENGTH_FUN_INDEX, JSFunction, to_length_fun)                            \
   V(GLOBAL_EVAL_FUN_INDEX, JSFunction, global_eval_fun)                        \
-  V(INSTANTIATE_FUN_INDEX, JSFunction, instantiate_fun)                        \
-  V(CONFIGURE_INSTANCE_FUN_INDEX, JSFunction, configure_instance_fun)          \
   V(ARRAY_BUFFER_FUN_INDEX, JSFunction, array_buffer_fun)                      \
+  V(SHARED_ARRAY_BUFFER_FUN_INDEX, JSFunction, shared_array_buffer_fun)        \
+  V(ARRAY_BUFFER_MAP_INDEX, Map, array_buffer_map)                             \
   V(UINT8_ARRAY_FUN_INDEX, JSFunction, uint8_array_fun)                        \
   V(INT8_ARRAY_FUN_INDEX, JSFunction, int8_array_fun)                          \
   V(UINT16_ARRAY_FUN_INDEX, JSFunction, uint16_array_fun)                      \
@@ -126,10 +129,12 @@ enum BindingFlags {
   V(SLOPPY_FUNCTION_WITH_READONLY_PROTOTYPE_MAP_INDEX, Map,                    \
     sloppy_function_with_readonly_prototype_map)                               \
   V(STRICT_FUNCTION_MAP_INDEX, Map, strict_function_map)                       \
+  V(STRONG_FUNCTION_MAP_INDEX, Map, strong_function_map)                       \
   V(SLOPPY_FUNCTION_WITHOUT_PROTOTYPE_MAP_INDEX, Map,                          \
     sloppy_function_without_prototype_map)                                     \
   V(STRICT_FUNCTION_WITHOUT_PROTOTYPE_MAP_INDEX, Map,                          \
     strict_function_without_prototype_map)                                     \
+  V(STRONG_CONSTRUCTOR_MAP_INDEX, Map, strong_constructor_map)                 \
   V(BOUND_FUNCTION_MAP_INDEX, Map, bound_function_map)                         \
   V(REGEXP_RESULT_MAP_INDEX, Map, regexp_result_map)                           \
   V(SLOPPY_ARGUMENTS_MAP_INDEX, Map, sloppy_arguments_map)                     \
@@ -139,7 +144,7 @@ enum BindingFlags {
   V(MAKE_MESSAGE_FUN_INDEX, JSFunction, make_message_fun)                      \
   V(GET_STACK_TRACE_LINE_INDEX, JSFunction, get_stack_trace_line_fun)          \
   V(CONFIGURE_GLOBAL_INDEX, JSFunction, configure_global_fun)                  \
-  V(FUNCTION_CACHE_INDEX, JSObject, function_cache)                            \
+  V(FUNCTION_CACHE_INDEX, ObjectHashTable, function_cache)                     \
   V(JSFUNCTION_RESULT_CACHES_INDEX, FixedArray, jsfunction_result_caches)      \
   V(NORMALIZED_MAP_CACHE_INDEX, Object, normalized_map_cache)                  \
   V(RUNTIME_CONTEXT_INDEX, Context, runtime_context)                           \
@@ -150,11 +155,13 @@ enum BindingFlags {
   V(OPAQUE_REFERENCE_FUNCTION_INDEX, JSFunction, opaque_reference_function)    \
   V(CONTEXT_EXTENSION_FUNCTION_INDEX, JSFunction, context_extension_function)  \
   V(MAP_CACHE_INDEX, Object, map_cache)                                        \
+  V(STRONG_MAP_CACHE_INDEX, Object, strong_map_cache)                          \
   V(EMBEDDER_DATA_INDEX, FixedArray, embedder_data)                            \
   V(ALLOW_CODE_GEN_FROM_STRINGS_INDEX, Object, allow_code_gen_from_strings)    \
   V(ERROR_MESSAGE_FOR_CODE_GEN_FROM_STRINGS_INDEX, Object,                     \
     error_message_for_code_gen_from_strings)                                   \
-  V(IS_PROMISE_INDEX, JSFunction, is_promise)                                  \
+  V(PROMISE_STATUS_INDEX, Symbol, promise_status)                              \
+  V(PROMISE_VALUE_INDEX, Symbol, promise_value)                                \
   V(PROMISE_CREATE_INDEX, JSFunction, promise_create)                          \
   V(PROMISE_RESOLVE_INDEX, JSFunction, promise_resolve)                        \
   V(PROMISE_REJECT_INDEX, JSFunction, promise_reject)                          \
@@ -177,27 +184,28 @@ enum BindingFlags {
     native_object_notifier_perform_change)                                     \
   V(SLOPPY_GENERATOR_FUNCTION_MAP_INDEX, Map, sloppy_generator_function_map)   \
   V(STRICT_GENERATOR_FUNCTION_MAP_INDEX, Map, strict_generator_function_map)   \
+  V(STRONG_GENERATOR_FUNCTION_MAP_INDEX, Map, strong_generator_function_map)   \
   V(GENERATOR_OBJECT_PROTOTYPE_MAP_INDEX, Map, generator_object_prototype_map) \
   V(ITERATOR_RESULT_MAP_INDEX, Map, iterator_result_map)                       \
   V(MAP_ITERATOR_MAP_INDEX, Map, map_iterator_map)                             \
   V(SET_ITERATOR_MAP_INDEX, Map, set_iterator_map)                             \
-  V(ITERATOR_SYMBOL_INDEX, Symbol, iterator_symbol)                            \
-  V(UNSCOPABLES_SYMBOL_INDEX, Symbol, unscopables_symbol)                      \
   V(ARRAY_VALUES_ITERATOR_INDEX, JSFunction, array_values_iterator)            \
-  V(GLOBAL_CONTEXT_TABLE_INDEX, GlobalContextTable, global_context_table)
+  V(SCRIPT_CONTEXT_TABLE_INDEX, ScriptContextTable, script_context_table)      \
+  V(NATIVES_UTILS_OBJECT_INDEX, Object, natives_utils_object)                  \
+  V(EXTRAS_EXPORTS_OBJECT_INDEX, JSObject, extras_exports_object)
 
 
-// A table of all global contexts. Every loaded top-level script with top-level
-// lexical declarations contributes its GlobalContext into this table.
+// A table of all script contexts. Every loaded top-level script with top-level
+// lexical declarations contributes its ScriptContext into this table.
 //
 // The table is a fixed array, its first slot is the current used count and
-// the subsequent slots 1..used contain GlobalContexts.
-class GlobalContextTable : public FixedArray {
+// the subsequent slots 1..used contain ScriptContexts.
+class ScriptContextTable : public FixedArray {
  public:
   // Conversions.
-  static GlobalContextTable* cast(Object* context) {
-    DCHECK(context->IsGlobalContextTable());
-    return reinterpret_cast<GlobalContextTable*>(context);
+  static ScriptContextTable* cast(Object* context) {
+    DCHECK(context->IsScriptContextTable());
+    return reinterpret_cast<ScriptContextTable*>(context);
   }
 
   struct LookupResult {
@@ -212,27 +220,33 @@ class GlobalContextTable : public FixedArray {
 
   void set_used(int used) { set(kUsedSlot, Smi::FromInt(used)); }
 
-  static Handle<Context> GetContext(Handle<GlobalContextTable> table, int i) {
+  static Handle<Context> GetContext(Handle<ScriptContextTable> table, int i) {
     DCHECK(i < table->used());
     return Handle<Context>::cast(FixedArray::get(table, i + 1));
   }
 
-  // Lookup a variable `name` in a GlobalContextTable.
+  // Lookup a variable `name` in a ScriptContextTable.
   // If it returns true, the variable is found and `result` contains
   // valid information about its location.
   // If it returns false, `result` is untouched.
   MUST_USE_RESULT
-  static bool Lookup(Handle<GlobalContextTable> table, Handle<String> name,
+  static bool Lookup(Handle<ScriptContextTable> table, Handle<String> name,
                      LookupResult* result);
 
   MUST_USE_RESULT
-  static Handle<GlobalContextTable> Extend(Handle<GlobalContextTable> table,
-                                           Handle<Context> global_context);
+  static Handle<ScriptContextTable> Extend(Handle<ScriptContextTable> table,
+                                           Handle<Context> script_context);
+
+  static int GetContextOffset(int context_index) {
+    return kFirstContextOffset + context_index * kPointerSize;
+  }
 
  private:
   static const int kUsedSlot = 0;
+  static const int kFirstContextOffset =
+      FixedArray::kHeaderSize + (kUsedSlot + 1) * kPointerSize;
 
-  DISALLOW_IMPLICIT_CONSTRUCTORS(GlobalContextTable);
+  DISALLOW_IMPLICIT_CONSTRUCTORS(ScriptContextTable);
 };
 
 // JSFunctions are pairs (context, function code), sometimes also called
@@ -278,9 +292,9 @@ class GlobalContextTable : public FixedArray {
 // properties.
 //
 // Finally, with Harmony scoping, the JSFunction representing a top level
-// script will have the GlobalContext rather than a FunctionContext.
-// Global contexts from all top-level scripts are gathered in
-// GlobalContextTable.
+// script will have the ScriptContext rather than a FunctionContext.
+// Script contexts from all top-level scripts are gathered in
+// ScriptContextTable.
 
 class Context: public FixedArray {
  public:
@@ -316,8 +330,10 @@ class Context: public FixedArray {
     SLOPPY_FUNCTION_MAP_INDEX,
     SLOPPY_FUNCTION_WITH_READONLY_PROTOTYPE_MAP_INDEX,
     STRICT_FUNCTION_MAP_INDEX,
+    STRONG_FUNCTION_MAP_INDEX,
     SLOPPY_FUNCTION_WITHOUT_PROTOTYPE_MAP_INDEX,
     STRICT_FUNCTION_WITHOUT_PROTOTYPE_MAP_INDEX,
+    STRONG_CONSTRUCTOR_MAP_INDEX,
     BOUND_FUNCTION_MAP_INDEX,
     INITIAL_OBJECT_PROTOTYPE_INDEX,
     INITIAL_ARRAY_PROTOTYPE_INDEX,
@@ -327,9 +343,11 @@ class Context: public FixedArray {
     STRING_FUNCTION_PROTOTYPE_MAP_INDEX,
     SYMBOL_FUNCTION_INDEX,
     OBJECT_FUNCTION_INDEX,
+    JS_OBJECT_STRONG_MAP_INDEX,
     INTERNAL_ARRAY_FUNCTION_INDEX,
     ARRAY_FUNCTION_INDEX,
     JS_ARRAY_MAPS_INDEX,
+    JS_ARRAY_STRONG_MAPS_INDEX,
     DATE_FUNCTION_INDEX,
     JSON_OBJECT_INDEX,
     REGEXP_FUNCTION_INDEX,
@@ -343,9 +361,8 @@ class Context: public FixedArray {
     TO_INT32_FUN_INDEX,
     TO_BOOLEAN_FUN_INDEX,
     GLOBAL_EVAL_FUN_INDEX,
-    INSTANTIATE_FUN_INDEX,
-    CONFIGURE_INSTANCE_FUN_INDEX,
     ARRAY_BUFFER_FUN_INDEX,
+    ARRAY_BUFFER_MAP_INDEX,
     UINT8_ARRAY_FUN_INDEX,
     INT8_ARRAY_FUN_INDEX,
     UINT16_ARRAY_FUN_INDEX,
@@ -365,6 +382,7 @@ class Context: public FixedArray {
     FLOAT64_ARRAY_EXTERNAL_MAP_INDEX,
     UINT8_CLAMPED_ARRAY_EXTERNAL_MAP_INDEX,
     DATA_VIEW_FUN_INDEX,
+    SHARED_ARRAY_BUFFER_FUN_INDEX,
     MESSAGE_LISTENERS_INDEX,
     MAKE_MESSAGE_FUN_INDEX,
     GET_STACK_TRACE_LINE_INDEX,
@@ -384,7 +402,8 @@ class Context: public FixedArray {
     ERROR_MESSAGE_FOR_CODE_GEN_FROM_STRINGS_INDEX,
     RUN_MICROTASKS_INDEX,
     ENQUEUE_MICROTASK_INDEX,
-    IS_PROMISE_INDEX,
+    PROMISE_STATUS_INDEX,
+    PROMISE_VALUE_INDEX,
     PROMISE_CREATE_INDEX,
     PROMISE_RESOLVE_INDEX,
     PROMISE_REJECT_INDEX,
@@ -405,15 +424,18 @@ class Context: public FixedArray {
     NATIVE_OBJECT_NOTIFIER_PERFORM_CHANGE,
     SLOPPY_GENERATOR_FUNCTION_MAP_INDEX,
     STRICT_GENERATOR_FUNCTION_MAP_INDEX,
+    STRONG_GENERATOR_FUNCTION_MAP_INDEX,
     GENERATOR_OBJECT_PROTOTYPE_MAP_INDEX,
     ITERATOR_RESULT_MAP_INDEX,
     MAP_ITERATOR_MAP_INDEX,
     SET_ITERATOR_MAP_INDEX,
-    ITERATOR_SYMBOL_INDEX,
-    UNSCOPABLES_SYMBOL_INDEX,
     ARRAY_VALUES_ITERATOR_INDEX,
-    GLOBAL_CONTEXT_TABLE_INDEX,
+    SCRIPT_CONTEXT_TABLE_INDEX,
     MAP_CACHE_INDEX,
+    STRONG_MAP_CACHE_INDEX,
+    TO_LENGTH_FUN_INDEX,
+    NATIVES_UTILS_OBJECT_INDEX,
+    EXTRAS_EXPORTS_OBJECT_INDEX,
 
     // Properties from here are treated as weak references by the full GC.
     // Scavenge treats them as strong references.
@@ -465,8 +487,8 @@ class Context: public FixedArray {
   // The builtins object.
   JSBuiltinsObject* builtins();
 
-  // Get the innermost global context by traversing the context chain.
-  Context* global_context();
+  // Get the script context by traversing the context chain.
+  Context* script_context();
 
   // Compute the native context by traversing the context chain.
   Context* native_context();
@@ -498,9 +520,9 @@ class Context: public FixedArray {
     Map* map = this->map();
     return map == map->GetHeap()->module_context_map();
   }
-  bool IsGlobalContext() {
+  bool IsScriptContext() {
     Map* map = this->map();
-    return map == map->GetHeap()->global_context_map();
+    return map == map->GetHeap()->script_context_map();
   }
 
   bool HasSameSecurityTokenAs(Context* that) {
@@ -568,20 +590,29 @@ class Context: public FixedArray {
     return kHeaderSize + index * kPointerSize - kHeapObjectTag;
   }
 
-  static int FunctionMapIndex(StrictMode strict_mode, FunctionKind kind) {
+  static int FunctionMapIndex(LanguageMode language_mode, FunctionKind kind) {
     if (IsGeneratorFunction(kind)) {
-      return strict_mode == SLOPPY ? SLOPPY_GENERATOR_FUNCTION_MAP_INDEX
-                                   : STRICT_GENERATOR_FUNCTION_MAP_INDEX;
+      return is_strong(language_mode) ? STRONG_GENERATOR_FUNCTION_MAP_INDEX :
+             is_strict(language_mode) ? STRICT_GENERATOR_FUNCTION_MAP_INDEX
+                                      : SLOPPY_GENERATOR_FUNCTION_MAP_INDEX;
     }
 
-    if (IsArrowFunction(kind) || IsConciseMethod(kind)) {
-      return strict_mode == SLOPPY
-                 ? SLOPPY_FUNCTION_WITHOUT_PROTOTYPE_MAP_INDEX
+    if (IsConstructor(kind)) {
+      // Use strict function map (no own "caller" / "arguments")
+      return is_strong(language_mode) ? STRONG_CONSTRUCTOR_MAP_INDEX
+                                      : STRICT_FUNCTION_MAP_INDEX;
+    }
+
+    if (IsArrowFunction(kind) || IsConciseMethod(kind) ||
+        IsAccessorFunction(kind)) {
+      return is_strong(language_mode)
+                 ? STRONG_FUNCTION_MAP_INDEX
                  : STRICT_FUNCTION_WITHOUT_PROTOTYPE_MAP_INDEX;
     }
 
-    return strict_mode == SLOPPY ? SLOPPY_FUNCTION_MAP_INDEX
-                                 : STRICT_FUNCTION_MAP_INDEX;
+    return is_strong(language_mode) ? STRONG_FUNCTION_MAP_INDEX :
+           is_strict(language_mode) ? STRICT_FUNCTION_MAP_INDEX
+                                    : SLOPPY_FUNCTION_MAP_INDEX;
   }
 
   static const int kSize = kHeaderSize + NATIVE_CONTEXT_SLOTS * kPointerSize;

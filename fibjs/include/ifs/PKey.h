@@ -35,6 +35,7 @@ public:
 	virtual result_t clone(obj_ptr<PKey_base>& retVal) = 0;
 	virtual result_t importKey(Buffer_base* DerKey, const char* password) = 0;
 	virtual result_t importKey(const char* pemKey, const char* password) = 0;
+	virtual result_t importFile(const char* filename, const char* password) = 0;
 	virtual result_t exportPem(std::string& retVal) = 0;
 	virtual result_t exportDer(obj_ptr<Buffer_base>& retVal) = 0;
 	virtual result_t encrypt(Buffer_base* data, obj_ptr<Buffer_base>& retVal, exlib::AsyncEvent* ac) = 0;
@@ -56,6 +57,7 @@ public:
 	static void s_isPrivate(const v8::FunctionCallbackInfo<v8::Value>& args);
 	static void s_clone(const v8::FunctionCallbackInfo<v8::Value>& args);
 	static void s_importKey(const v8::FunctionCallbackInfo<v8::Value>& args);
+	static void s_importFile(const v8::FunctionCallbackInfo<v8::Value>& args);
 	static void s_exportPem(const v8::FunctionCallbackInfo<v8::Value>& args);
 	static void s_exportDer(const v8::FunctionCallbackInfo<v8::Value>& args);
 	static void s_encrypt(const v8::FunctionCallbackInfo<v8::Value>& args);
@@ -82,17 +84,18 @@ namespace fibjs
 	{
 		static ClassData::ClassMethod s_method[] = 
 		{
-			{"genRsaKey", s_genRsaKey},
-			{"genEcKey", s_genEcKey},
-			{"isPrivate", s_isPrivate},
-			{"clone", s_clone},
-			{"importKey", s_importKey},
-			{"exportPem", s_exportPem},
-			{"exportDer", s_exportDer},
-			{"encrypt", s_encrypt},
-			{"decrypt", s_decrypt},
-			{"sign", s_sign},
-			{"verify", s_verify}
+			{"genRsaKey", s_genRsaKey, false},
+			{"genEcKey", s_genEcKey, false},
+			{"isPrivate", s_isPrivate, false},
+			{"clone", s_clone, false},
+			{"importKey", s_importKey, false},
+			{"importFile", s_importFile, false},
+			{"exportPem", s_exportPem, false},
+			{"exportDer", s_exportDer, false},
+			{"encrypt", s_encrypt, false},
+			{"decrypt", s_decrypt, false},
+			{"sign", s_sign, false},
+			{"verify", s_verify, false}
 		};
 
 		static ClassData::ClassProperty s_property[] = 
@@ -105,7 +108,7 @@ namespace fibjs
 		static ClassData s_cd = 
 		{ 
 			"PKey", s__new, 
-			11, s_method, 0, NULL, 3, s_property, NULL, NULL,
+			12, s_method, 0, NULL, 3, s_property, NULL, NULL,
 			&object_base::class_info()
 		};
 
@@ -230,6 +233,19 @@ namespace fibjs
 		OPT_ARG(arg_string, 1, "");
 
 		hr = pInst->importKey(v0, v1);
+
+		METHOD_VOID();
+	}
+
+	inline void PKey_base::s_importFile(const v8::FunctionCallbackInfo<v8::Value>& args)
+	{
+		METHOD_INSTANCE(PKey_base);
+		METHOD_ENTER(2, 1);
+
+		ARG(arg_string, 0);
+		OPT_ARG(arg_string, 1, "");
+
+		hr = pInst->importFile(v0, v1);
 
 		METHOD_VOID();
 	}

@@ -12,32 +12,32 @@ namespace v8 {
 namespace internal {
 
 
-Handle<GlobalContextTable> GlobalContextTable::Extend(
-    Handle<GlobalContextTable> table, Handle<Context> global_context) {
-  Handle<GlobalContextTable> result;
+Handle<ScriptContextTable> ScriptContextTable::Extend(
+    Handle<ScriptContextTable> table, Handle<Context> script_context) {
+  Handle<ScriptContextTable> result;
   int used = table->used();
   int length = table->length();
   CHECK(used >= 0 && length > 0 && used < length);
   if (used + 1 == length) {
     CHECK(length < Smi::kMaxValue / 2);
-    result = Handle<GlobalContextTable>::cast(
+    result = Handle<ScriptContextTable>::cast(
         FixedArray::CopySize(table, length * 2));
   } else {
     result = table;
   }
   result->set_used(used + 1);
 
-  DCHECK(global_context->IsGlobalContext());
-  result->set(used + 1, *global_context);
+  DCHECK(script_context->IsScriptContext());
+  result->set(used + 1, *script_context);
   return result;
 }
 
 
-bool GlobalContextTable::Lookup(Handle<GlobalContextTable> table,
+bool ScriptContextTable::Lookup(Handle<ScriptContextTable> table,
                                 Handle<String> name, LookupResult* result) {
   for (int i = 0; i < table->used(); i++) {
     Handle<Context> context = GetContext(table, i);
-    DCHECK(context->IsGlobalContext());
+    DCHECK(context->IsScriptContext());
     Handle<ScopeInfo> scope_info(ScopeInfo::cast(context->extension()));
     int slot_index = ScopeInfo::ContextSlotIndex(
         scope_info, name, &result->mode, &result->init_flag,
@@ -55,7 +55,8 @@ bool GlobalContextTable::Lookup(Handle<GlobalContextTable> table,
 
 Context* Context::declaration_context() {
   Context* current = this;
-  while (!current->IsFunctionContext() && !current->IsNativeContext()) {
+  while (!current->IsFunctionContext() && !current->IsNativeContext() &&
+         !current->IsScriptContext()) {
     current = current->previous();
     DCHECK(current->closure() == closure());
   }
@@ -74,9 +75,9 @@ JSBuiltinsObject* Context::builtins() {
 }
 
 
-Context* Context::global_context() {
+Context* Context::script_context() {
   Context* current = this;
-  while (!current->IsGlobalContext()) {
+  while (!current->IsScriptContext()) {
     current = current->previous();
   }
   return current;
@@ -121,27 +122,26 @@ static Maybe<PropertyAttributes> UnscopableLookup(LookupIterator* it) {
   Isolate* isolate = it->isolate();
 
   Maybe<PropertyAttributes> attrs = JSReceiver::GetPropertyAttributes(it);
-  DCHECK(attrs.has_value || isolate->has_pending_exception());
-  if (!attrs.has_value || attrs.value == ABSENT) return attrs;
+  DCHECK(attrs.IsJust() || isolate->has_pending_exception());
+  if (!attrs.IsJust() || attrs.FromJust() == ABSENT) return attrs;
 
-  Handle<Symbol> unscopables_symbol(
-      isolate->native_context()->unscopables_symbol(), isolate);
+  Handle<Symbol> unscopables_symbol = isolate->factory()->unscopables_symbol();
   Handle<Object> receiver = it->GetReceiver();
   Handle<Object> unscopables;
   MaybeHandle<Object> maybe_unscopables =
       Object::GetProperty(receiver, unscopables_symbol);
   if (!maybe_unscopables.ToHandle(&unscopables)) {
-    return Maybe<PropertyAttributes>();
+    return Nothing<PropertyAttributes>();
   }
   if (!unscopables->IsSpecObject()) return attrs;
-  Maybe<bool> blacklist = JSReceiver::HasProperty(
-      Handle<JSReceiver>::cast(unscopables), it->name());
-  if (!blacklist.has_value) {
+  Handle<Object> blacklist;
+  MaybeHandle<Object> maybe_blacklist =
+      Object::GetProperty(unscopables, it->name());
+  if (!maybe_blacklist.ToHandle(&blacklist)) {
     DCHECK(isolate->has_pending_exception());
-    return Maybe<PropertyAttributes>();
+    return Nothing<PropertyAttributes>();
   }
-  if (blacklist.value) return maybe(ABSENT);
-  return attrs;
+  return blacklist->BooleanValue() ? Just(ABSENT) : attrs;
 }
 
 static void GetAttributesAndBindingFlags(VariableMode mode,
@@ -172,9 +172,9 @@ static void GetAttributesAndBindingFlags(VariableMode mode,
                            ? IMMUTABLE_CHECK_INITIALIZED_HARMONY
                            : IMMUTABLE_IS_INITIALIZED_HARMONY;
       break;
-    case MODULE:
-      *attributes = READ_ONLY;
-      *binding_flags = IMMUTABLE_IS_INITIALIZED_HARMONY;
+    case IMPORT:
+      // TODO(ES6)
+      UNREACHABLE();
       break;
     case DYNAMIC:
     case DYNAMIC_GLOBAL:
@@ -214,7 +214,7 @@ Handle<Object> Context::Lookup(Handle<String> name,
   do {
     if (FLAG_trace_contexts) {
       PrintF(" - looking in context %p", reinterpret_cast<void*>(*context));
-      if (context->IsGlobalContext()) PrintF(" (global context)");
+      if (context->IsScriptContext()) PrintF(" (script context)");
       if (context->IsNativeContext()) PrintF(" (native context)");
       PrintF("\n");
     }
@@ -229,23 +229,23 @@ Handle<Object> Context::Lookup(Handle<String> name,
 
       if (context->IsNativeContext()) {
         if (FLAG_trace_contexts) {
-          PrintF(" - trying other global contexts\n");
+          PrintF(" - trying other script contexts\n");
         }
-        // Try other global contexts.
-        Handle<GlobalContextTable> global_contexts(
-            context->global_object()->native_context()->global_context_table());
-        GlobalContextTable::LookupResult r;
-        if (GlobalContextTable::Lookup(global_contexts, name, &r)) {
+        // Try other script contexts.
+        Handle<ScriptContextTable> script_contexts(
+            context->global_object()->native_context()->script_context_table());
+        ScriptContextTable::LookupResult r;
+        if (ScriptContextTable::Lookup(script_contexts, name, &r)) {
           if (FLAG_trace_contexts) {
-            Handle<Context> c = GlobalContextTable::GetContext(global_contexts,
+            Handle<Context> c = ScriptContextTable::GetContext(script_contexts,
                                                                r.context_index);
-            PrintF("=> found property in global context %d: %p\n",
+            PrintF("=> found property in script context %d: %p\n",
                    r.context_index, reinterpret_cast<void*>(*c));
           }
           *index = r.slot_index;
           GetAttributesAndBindingFlags(r.mode, r.init_flag, attributes,
                                        binding_flags);
-          return GlobalContextTable::GetContext(global_contexts,
+          return ScriptContextTable::GetContext(script_contexts,
                                                 r.context_index);
         }
       }
@@ -253,22 +253,27 @@ Handle<Object> Context::Lookup(Handle<String> name,
       // Context extension objects needs to behave as if they have no
       // prototype.  So even if we want to follow prototype chains, we need
       // to only do a local lookup for context extension objects.
-      Maybe<PropertyAttributes> maybe;
+      Maybe<PropertyAttributes> maybe = Nothing<PropertyAttributes>();
       if ((flags & FOLLOW_PROTOTYPE_CHAIN) == 0 ||
           object->IsJSContextExtensionObject()) {
         maybe = JSReceiver::GetOwnPropertyAttributes(object, name);
       } else if (context->IsWithContext()) {
-        LookupIterator it(object, name);
-        maybe = UnscopableLookup(&it);
+        // A with context will never bind "this".
+        if (name->Equals(*isolate->factory()->this_string())) {
+          maybe = Just(ABSENT);
+        } else {
+          LookupIterator it(object, name);
+          maybe = UnscopableLookup(&it);
+        }
       } else {
         maybe = JSReceiver::GetPropertyAttributes(object, name);
       }
 
-      if (!maybe.has_value) return Handle<Object>();
+      if (!maybe.IsJust()) return Handle<Object>();
       DCHECK(!isolate->has_pending_exception());
-      *attributes = maybe.value;
+      *attributes = maybe.FromJust();
 
-      if (maybe.value != ABSENT) {
+      if (maybe.FromJust() != ABSENT) {
         if (FLAG_trace_contexts) {
           PrintF("=> found property in context object %p\n",
                  reinterpret_cast<void*>(*object));
@@ -279,7 +284,7 @@ Handle<Object> Context::Lookup(Handle<String> name,
 
     // 2. Check the context proper if it has slots.
     if (context->IsFunctionContext() || context->IsBlockContext() ||
-        (FLAG_harmony_scoping && context->IsGlobalContext())) {
+        context->IsScriptContext()) {
       // Use serialized scope information of functions and blocks to search
       // for the context index.
       Handle<ScopeInfo> scope_info;
@@ -480,7 +485,7 @@ bool Context::IsBootstrappingOrValidParentContext(
   if (child->GetIsolate()->bootstrapper()->IsActive()) return true;
   if (!object->IsContext()) return false;
   Context* context = Context::cast(object);
-  return context->IsNativeContext() || context->IsGlobalContext() ||
+  return context->IsNativeContext() || context->IsScriptContext() ||
          context->IsModuleContext() || !child->IsModuleContext();
 }
 

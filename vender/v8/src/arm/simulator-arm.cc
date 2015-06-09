@@ -1,3 +1,7 @@
+#include "src/v8.h"
+
+#if V8_TARGET_ARCH_ARM
+
 // Copyright 2012 the V8 project authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -13,6 +17,7 @@
 #include "src/arm/constants-arm.h"
 #include "src/arm/simulator-arm.h"
 #include "src/assembler.h"
+#include "src/base/bits.h"
 #include "src/codegen.h"
 #include "src/disasm.h"
 
@@ -656,9 +661,8 @@ void Simulator::FlushICache(v8::internal::HashMap* i_cache,
 
 
 CachePage* Simulator::GetCachePage(v8::internal::HashMap* i_cache, void* page) {
-  v8::internal::HashMap::Entry* entry = i_cache->Lookup(page,
-                                                        ICacheHash(page),
-                                                        true);
+  v8::internal::HashMap::Entry* entry =
+      i_cache->LookupOrInsert(page, ICacheHash(page));
   if (entry->value == NULL) {
     CachePage* new_page = new CachePage();
     entry->value = new_page;
@@ -774,8 +778,7 @@ Simulator::Simulator(Isolate* isolate) : isolate_(isolate) {
 }
 
 
-Simulator::~Simulator() {
-}
+Simulator::~Simulator() { free(stack_); }
 
 
 // When the generated code calls an external reference we need to catch that in
@@ -834,12 +837,33 @@ class Redirection {
     return redirection->external_function();
   }
 
+  static void DeleteChain(Redirection* redirection) {
+    while (redirection != nullptr) {
+      Redirection* next = redirection->next_;
+      delete redirection;
+      redirection = next;
+    }
+  }
+
  private:
   void* external_function_;
   uint32_t swi_instruction_;
   ExternalReference::Type type_;
   Redirection* next_;
 };
+
+
+// static
+void Simulator::TearDown(HashMap* i_cache, Redirection* first) {
+  Redirection::DeleteChain(first);
+  if (i_cache != nullptr) {
+    for (HashMap::Entry* entry = i_cache->Start(); entry != nullptr;
+         entry = i_cache->Next(entry)) {
+      delete static_cast<CachePage*>(entry->value);
+    }
+    delete i_cache;
+  }
+}
 
 
 void* Simulator::RedirectExternalReference(void* external_function,
@@ -1308,6 +1332,33 @@ bool Simulator::OverflowFrom(int32_t alu_out,
 
 
 // Support for VFP comparisons.
+void Simulator::Compute_FPSCR_Flags(float val1, float val2) {
+  if (std::isnan(val1) || std::isnan(val2)) {
+    n_flag_FPSCR_ = false;
+    z_flag_FPSCR_ = false;
+    c_flag_FPSCR_ = true;
+    v_flag_FPSCR_ = true;
+    // All non-NaN cases.
+  } else if (val1 == val2) {
+    n_flag_FPSCR_ = false;
+    z_flag_FPSCR_ = true;
+    c_flag_FPSCR_ = true;
+    v_flag_FPSCR_ = false;
+  } else if (val1 < val2) {
+    n_flag_FPSCR_ = true;
+    z_flag_FPSCR_ = false;
+    c_flag_FPSCR_ = false;
+    v_flag_FPSCR_ = false;
+  } else {
+    // Case when (val1 > val2).
+    n_flag_FPSCR_ = false;
+    z_flag_FPSCR_ = false;
+    c_flag_FPSCR_ = true;
+    v_flag_FPSCR_ = false;
+  }
+}
+
+
 void Simulator::Compute_FPSCR_Flags(double val1, double val2) {
   if (std::isnan(val1) || std::isnan(val2)) {
     n_flag_FPSCR_ = false;
@@ -1506,7 +1557,7 @@ int32_t Simulator::GetShiftRm(Instruction* instr, bool* carry_out) {
 int32_t Simulator::GetImm(Instruction* instr, bool* carry_out) {
   int rotate = instr->RotateValue() * 2;
   int immed8 = instr->Immed8Value();
-  int imm = (immed8 >> rotate) | (immed8 << (32 - rotate));
+  int imm = base::bits::RotateRight32(immed8, rotate);
   *carry_out = (rotate == 0) ? c_flag_ : (imm < 0);
   return imm;
 }
@@ -1635,13 +1686,10 @@ void Simulator::HandleVList(Instruction* instr) {
           ReadW(reinterpret_cast<int32_t>(address), instr),
           ReadW(reinterpret_cast<int32_t>(address + 1), instr)
         };
-        double d;
-        memcpy(&d, data, 8);
-        set_d_register_from_double(reg, d);
+        set_d_register(reg, reinterpret_cast<uint32_t*>(data));
       } else {
-        int32_t data[2];
-        double d = get_double_from_d_register(reg);
-        memcpy(data, &d, 8);
+        uint32_t data[2];
+        get_d_register(reg, data);
         WriteW(reinterpret_cast<int32_t>(address), data[0], instr);
         WriteW(reinterpret_cast<int32_t>(address + 1), data[1], instr);
       }
@@ -1916,9 +1964,25 @@ void Simulator::SoftwareInterrupt(Instruction* instr) {
 }
 
 
+float Simulator::canonicalizeNaN(float value) {
+  // Default NaN value, see "NaN handling" in "IEEE 754 standard implementation
+  // choices" of the ARM Reference Manual.
+  const uint32_t kDefaultNaN = 0x7FC00000u;
+  if (FPSCR_default_NaN_mode_ && std::isnan(value)) {
+    value = bit_cast<float>(kDefaultNaN);
+  }
+  return value;
+}
+
+
 double Simulator::canonicalizeNaN(double value) {
-  return (FPSCR_default_NaN_mode_ && std::isnan(value)) ?
-    FixedDoubleArray::canonical_not_the_hole_nan_as_double() : value;
+  // Default NaN value, see "NaN handling" in "IEEE 754 standard implementation
+  // choices" of the ARM Reference Manual.
+  const uint64_t kDefaultNaN = V8_UINT64_C(0x7FF8000000000000);
+  if (FPSCR_default_NaN_mode_ && std::isnan(value)) {
+    value = bit_cast<double>(kDefaultNaN);
+  }
+  return value;
 }
 
 
@@ -3006,18 +3070,30 @@ void Simulator::DecodeType7(Instruction* instr) {
 // vcvt: Sd = Dm
 // vcvt.f64.s32 Dd, Dd, #<fbits>
 // Dd = vabs(Dm)
+// Sd = vabs(Sm)
 // Dd = vneg(Dm)
+// Sd = vneg(Sm)
 // Dd = vadd(Dn, Dm)
+// Sd = vadd(Sn, Sm)
 // Dd = vsub(Dn, Dm)
+// Sd = vsub(Sn, Sm)
 // Dd = vmul(Dn, Dm)
+// Sd = vmul(Sn, Sm)
 // Dd = vdiv(Dn, Dm)
+// Sd = vdiv(Sn, Sm)
 // vcmp(Dd, Dm)
-// vmrs
+// vcmp(Sd, Sm)
 // Dd = vsqrt(Dm)
+// Sd = vsqrt(Sm)
+// vmrs
 void Simulator::DecodeTypeVFP(Instruction* instr) {
   DCHECK((instr->TypeValue() == 7) && (instr->Bit(24) == 0x0) );
   DCHECK(instr->Bits(11, 9) == 0x5);
 
+  // Obtain single precision register codes.
+  int m = instr->VFPMRegValue(kSinglePrecision);
+  int d = instr->VFPDRegValue(kSinglePrecision);
+  int n = instr->VFPNRegValue(kSinglePrecision);
   // Obtain double precision register codes.
   int vm = instr->VFPMRegValue(kDoublePrecision);
   int vd = instr->VFPDRegValue(kDoublePrecision);
@@ -3029,26 +3105,38 @@ void Simulator::DecodeTypeVFP(Instruction* instr) {
       if ((instr->Opc2Value() == 0x0) && (instr->Opc3Value() == 0x1)) {
         // vmov register to register.
         if (instr->SzValue() == 0x1) {
-          int m = instr->VFPMRegValue(kDoublePrecision);
-          int d = instr->VFPDRegValue(kDoublePrecision);
-          set_d_register_from_double(d, get_double_from_d_register(m));
+          uint32_t data[2];
+          get_d_register(vm, data);
+          set_d_register(vd, data);
         } else {
-          int m = instr->VFPMRegValue(kSinglePrecision);
-          int d = instr->VFPDRegValue(kSinglePrecision);
-          set_s_register_from_float(d, get_float_from_s_register(m));
+          set_s_register(d, get_s_register(m));
         }
       } else if ((instr->Opc2Value() == 0x0) && (instr->Opc3Value() == 0x3)) {
         // vabs
-        double dm_value = get_double_from_d_register(vm);
-        double dd_value = std::fabs(dm_value);
-        dd_value = canonicalizeNaN(dd_value);
-        set_d_register_from_double(vd, dd_value);
+        if (instr->SzValue() == 0x1) {
+          double dm_value = get_double_from_d_register(vm);
+          double dd_value = std::fabs(dm_value);
+          dd_value = canonicalizeNaN(dd_value);
+          set_d_register_from_double(vd, dd_value);
+        } else {
+          float sm_value = get_float_from_s_register(m);
+          float sd_value = std::fabs(sm_value);
+          sd_value = canonicalizeNaN(sd_value);
+          set_s_register_from_float(d, sd_value);
+        }
       } else if ((instr->Opc2Value() == 0x1) && (instr->Opc3Value() == 0x1)) {
         // vneg
-        double dm_value = get_double_from_d_register(vm);
-        double dd_value = -dm_value;
-        dd_value = canonicalizeNaN(dd_value);
-        set_d_register_from_double(vd, dd_value);
+        if (instr->SzValue() == 0x1) {
+          double dm_value = get_double_from_d_register(vm);
+          double dd_value = -dm_value;
+          dd_value = canonicalizeNaN(dd_value);
+          set_d_register_from_double(vd, dd_value);
+        } else {
+          float sm_value = get_float_from_s_register(m);
+          float sd_value = -sm_value;
+          sd_value = canonicalizeNaN(sd_value);
+          set_s_register_from_float(d, sd_value);
+        }
       } else if ((instr->Opc2Value() == 0x7) && (instr->Opc3Value() == 0x3)) {
         DecodeVCVTBetweenDoubleAndSingle(instr);
       } else if ((instr->Opc2Value() == 0x8) && (instr->Opc3Value() & 0x1)) {
@@ -3068,10 +3156,17 @@ void Simulator::DecodeTypeVFP(Instruction* instr) {
         DecodeVCMP(instr);
       } else if (((instr->Opc2Value() == 0x1)) && (instr->Opc3Value() == 0x3)) {
         // vsqrt
-        double dm_value = get_double_from_d_register(vm);
-        double dd_value = std::sqrt(dm_value);
-        dd_value = canonicalizeNaN(dd_value);
-        set_d_register_from_double(vd, dd_value);
+        if (instr->SzValue() == 0x1) {
+          double dm_value = get_double_from_d_register(vm);
+          double dd_value = fast_sqrt(dm_value);
+          dd_value = canonicalizeNaN(dd_value);
+          set_d_register_from_double(vd, dd_value);
+        } else {
+          float sm_value = get_float_from_s_register(m);
+          float sd_value = fast_sqrt(sm_value);
+          sd_value = canonicalizeNaN(sd_value);
+          set_s_register_from_float(d, sd_value);
+        }
       } else if (instr->Opc3Value() == 0x0) {
         // vmov immediate.
         if (instr->SzValue() == 0x1) {
@@ -3089,72 +3184,103 @@ void Simulator::DecodeTypeVFP(Instruction* instr) {
         UNREACHABLE();  // Not used by V8.
       }
     } else if (instr->Opc1Value() == 0x3) {
-      if (instr->SzValue() != 0x1) {
-        UNREACHABLE();  // Not used by V8.
-      }
-
       if (instr->Opc3Value() & 0x1) {
         // vsub
-        double dn_value = get_double_from_d_register(vn);
-        double dm_value = get_double_from_d_register(vm);
-        double dd_value = dn_value - dm_value;
-        dd_value = canonicalizeNaN(dd_value);
-        set_d_register_from_double(vd, dd_value);
+        if (instr->SzValue() == 0x1) {
+          double dn_value = get_double_from_d_register(vn);
+          double dm_value = get_double_from_d_register(vm);
+          double dd_value = dn_value - dm_value;
+          dd_value = canonicalizeNaN(dd_value);
+          set_d_register_from_double(vd, dd_value);
+        } else {
+          float sn_value = get_float_from_s_register(n);
+          float sm_value = get_float_from_s_register(m);
+          float sd_value = sn_value - sm_value;
+          sd_value = canonicalizeNaN(sd_value);
+          set_s_register_from_float(d, sd_value);
+        }
       } else {
         // vadd
-        double dn_value = get_double_from_d_register(vn);
-        double dm_value = get_double_from_d_register(vm);
-        double dd_value = dn_value + dm_value;
-        dd_value = canonicalizeNaN(dd_value);
-        set_d_register_from_double(vd, dd_value);
+        if (instr->SzValue() == 0x1) {
+          double dn_value = get_double_from_d_register(vn);
+          double dm_value = get_double_from_d_register(vm);
+          double dd_value = dn_value + dm_value;
+          dd_value = canonicalizeNaN(dd_value);
+          set_d_register_from_double(vd, dd_value);
+        } else {
+          float sn_value = get_float_from_s_register(n);
+          float sm_value = get_float_from_s_register(m);
+          float sd_value = sn_value + sm_value;
+          sd_value = canonicalizeNaN(sd_value);
+          set_s_register_from_float(d, sd_value);
+        }
       }
     } else if ((instr->Opc1Value() == 0x2) && !(instr->Opc3Value() & 0x1)) {
       // vmul
-      if (instr->SzValue() != 0x1) {
-        UNREACHABLE();  // Not used by V8.
+      if (instr->SzValue() == 0x1) {
+        double dn_value = get_double_from_d_register(vn);
+        double dm_value = get_double_from_d_register(vm);
+        double dd_value = dn_value * dm_value;
+        dd_value = canonicalizeNaN(dd_value);
+        set_d_register_from_double(vd, dd_value);
+      } else {
+        float sn_value = get_float_from_s_register(n);
+        float sm_value = get_float_from_s_register(m);
+        float sd_value = sn_value * sm_value;
+        sd_value = canonicalizeNaN(sd_value);
+        set_s_register_from_float(d, sd_value);
       }
-
-      double dn_value = get_double_from_d_register(vn);
-      double dm_value = get_double_from_d_register(vm);
-      double dd_value = dn_value * dm_value;
-      dd_value = canonicalizeNaN(dd_value);
-      set_d_register_from_double(vd, dd_value);
     } else if ((instr->Opc1Value() == 0x0)) {
       // vmla, vmls
       const bool is_vmls = (instr->Opc3Value() & 0x1);
+      if (instr->SzValue() == 0x1) {
+        const double dd_val = get_double_from_d_register(vd);
+        const double dn_val = get_double_from_d_register(vn);
+        const double dm_val = get_double_from_d_register(vm);
 
-      if (instr->SzValue() != 0x1) {
-        UNREACHABLE();  // Not used by V8.
-      }
-
-      const double dd_val = get_double_from_d_register(vd);
-      const double dn_val = get_double_from_d_register(vn);
-      const double dm_val = get_double_from_d_register(vm);
-
-      // Note: we do the mul and add/sub in separate steps to avoid getting a
-      // result with too high precision.
-      set_d_register_from_double(vd, dn_val * dm_val);
-      if (is_vmls) {
-        set_d_register_from_double(
-          vd,
-          canonicalizeNaN(dd_val - get_double_from_d_register(vd)));
+        // Note: we do the mul and add/sub in separate steps to avoid getting a
+        // result with too high precision.
+        set_d_register_from_double(vd, dn_val * dm_val);
+        if (is_vmls) {
+          set_d_register_from_double(
+              vd, canonicalizeNaN(dd_val - get_double_from_d_register(vd)));
+        } else {
+          set_d_register_from_double(
+              vd, canonicalizeNaN(dd_val + get_double_from_d_register(vd)));
+        }
       } else {
-        set_d_register_from_double(
-          vd,
-          canonicalizeNaN(dd_val + get_double_from_d_register(vd)));
+        const float sd_val = get_float_from_s_register(d);
+        const float sn_val = get_float_from_s_register(n);
+        const float sm_val = get_float_from_s_register(m);
+
+        // Note: we do the mul and add/sub in separate steps to avoid getting a
+        // result with too high precision.
+        set_s_register_from_float(d, sn_val * sm_val);
+        if (is_vmls) {
+          set_s_register_from_float(
+              d, canonicalizeNaN(sd_val - get_float_from_s_register(d)));
+        } else {
+          set_s_register_from_float(
+              d, canonicalizeNaN(sd_val + get_float_from_s_register(d)));
+        }
       }
     } else if ((instr->Opc1Value() == 0x4) && !(instr->Opc3Value() & 0x1)) {
       // vdiv
-      if (instr->SzValue() != 0x1) {
-        UNREACHABLE();  // Not used by V8.
+      if (instr->SzValue() == 0x1) {
+        double dn_value = get_double_from_d_register(vn);
+        double dm_value = get_double_from_d_register(vm);
+        double dd_value = dn_value / dm_value;
+        div_zero_vfp_flag_ = (dm_value == 0);
+        dd_value = canonicalizeNaN(dd_value);
+        set_d_register_from_double(vd, dd_value);
+      } else {
+        float sn_value = get_float_from_s_register(n);
+        float sm_value = get_float_from_s_register(m);
+        float sd_value = sn_value / sm_value;
+        div_zero_vfp_flag_ = (sm_value == 0);
+        sd_value = canonicalizeNaN(sd_value);
+        set_s_register_from_float(d, sd_value);
       }
-
-      double dn_value = get_double_from_d_register(vn);
-      double dm_value = get_double_from_d_register(vm);
-      double dd_value = dn_value / dm_value;
-      div_zero_vfp_flag_ = (dm_value == 0);
-      dd_value = canonicalizeNaN(dd_value);
-      set_d_register_from_double(vd, dd_value);
     } else {
       UNIMPLEMENTED();  // Not used by V8.
     }
@@ -3167,12 +3293,10 @@ void Simulator::DecodeTypeVFP(Instruction* instr) {
                (instr->Bit(23) == 0x0)) {
       // vmov (ARM core register to scalar)
       int vd = instr->Bits(19, 16) | (instr->Bit(7) << 4);
-      double dd_value = get_double_from_d_register(vd);
-      int32_t data[2];
-      memcpy(data, &dd_value, 8);
+      uint32_t data[2];
+      get_d_register(vd, data);
       data[instr->Bit(21)] = get_register(instr->RtValue());
-      memcpy(&dd_value, data, 8);
-      set_d_register_from_double(vd, dd_value);
+      set_d_register(vd, data);
     } else if ((instr->VLValue() == 0x1) &&
                (instr->VCValue() == 0x1) &&
                (instr->Bit(23) == 0x0)) {
@@ -3261,7 +3385,7 @@ void Simulator::DecodeVCMP(Instruction* instr) {
   // Comparison.
 
   VFPRegPrecision precision = kSinglePrecision;
-  if (instr->SzValue() == 1) {
+  if (instr->SzValue() == 0x1) {
     precision = kDoublePrecision;
   }
 
@@ -3287,7 +3411,20 @@ void Simulator::DecodeVCMP(Instruction* instr) {
 
     Compute_FPSCR_Flags(dd_value, dm_value);
   } else {
-    UNIMPLEMENTED();  // Not used by V8.
+    float sd_value = get_float_from_s_register(d);
+    float sm_value = 0.0;
+    if (instr->Opc2Value() == 0x4) {
+      sm_value = get_float_from_s_register(m);
+    }
+
+    // Raise exceptions for quiet NaNs if necessary.
+    if (instr->Bit(7) == 1) {
+      if (std::isnan(sd_value)) {
+        inv_op_vfp_flag_ = true;
+      }
+    }
+
+    Compute_FPSCR_Flags(sd_value, sm_value);
   }
 }
 
@@ -3529,16 +3666,13 @@ void Simulator::DecodeType6CoprocessorIns(Instruction* instr) {
           int rn = instr->RnValue();
           int vm = instr->VFPMRegValue(kDoublePrecision);
           if (instr->HasL()) {
-            int32_t data[2];
-            double d = get_double_from_d_register(vm);
-            memcpy(data, &d, 8);
+            uint32_t data[2];
+            get_d_register(vm, data);
             set_register(rt, data[0]);
             set_register(rn, data[1]);
           } else {
             int32_t data[] = { get_register(rt), get_register(rn) };
-            double d;
-            memcpy(&d, data, 8);
-            set_d_register_from_double(vm, d);
+            set_d_register(vm, reinterpret_cast<uint32_t*>(data));
           }
         }
         break;
@@ -3559,14 +3693,11 @@ void Simulator::DecodeType6CoprocessorIns(Instruction* instr) {
             ReadW(address, instr),
             ReadW(address + 4, instr)
           };
-          double val;
-          memcpy(&val, data, 8);
-          set_d_register_from_double(vd, val);
+          set_d_register(vd, reinterpret_cast<uint32_t*>(data));
         } else {
           // Store double to memory: vstr.
-          int32_t data[2];
-          double val = get_double_from_d_register(vd);
-          memcpy(data, &val, 8);
+          uint32_t data[2];
+          get_d_register(vd, data);
           WriteW(address, data[0], instr);
           WriteW(address + 4, data[1], instr);
         }
@@ -4027,5 +4158,8 @@ uintptr_t Simulator::PopAddress() {
 } }  // namespace v8::internal
 
 #endif  // USE_SIMULATOR
+
+#endif  // V8_TARGET_ARCH_ARM
+
 
 #endif  // V8_TARGET_ARCH_ARM

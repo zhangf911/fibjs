@@ -111,12 +111,14 @@ function cp_folder(path) {
 
 var gens = [
 	'libraries.cc',
-	'experimental-libraries.cc'
+	'experimental-libraries.cc',
+	'extras-libraries.cc'
 ];
 
 function cp_gen() {
+	fs.mkdir('src/gen');
 	gens.forEach(function(f) {
-		fs.writeFile('src/' + f, fs.readFile(v8Folder + '/out/ia32.release/obj/gen/' + f));
+		fs.writeFile('src/gen/' + f, fs.readFile(v8Folder + '/out/ia32.release/obj/gen/' + f));
 	});
 }
 
@@ -127,9 +129,6 @@ function fix_src(path, val) {
 		if (name.substr(name.length - 3, 3) == '.cc') {
 			var fname = path + '/' + name;
 			var txt = fs.readFile(fname);
-
-			if (txt.indexOf(val) >= 0)
-				return;
 
 			console.log("fix", fname);
 			fs.writeFile(fname, '#include "src/v8.h"\n\n#if ' + val + '\n\n' + txt + '\n\n#endif  // ' + val);
@@ -142,6 +141,7 @@ var archs = {
 	arm64: 'V8_TARGET_ARCH_ARM64',
 	mips: 'V8_TARGET_ARCH_MIPS',
 	mips64: 'V8_TARGET_ARCH_MIPS64',
+	ppc: "V8_TARGET_ARCH_PPC",
 	ia32: 'V8_TARGET_ARCH_IA32',
 	x64: 'V8_TARGET_ARCH_X64',
 	x87: 'V8_TARGET_ARCH_X87'
@@ -164,6 +164,7 @@ function patch_src(path) {
 }
 
 var plats1 = {
+	'aix': "#ifdef AIX",
 	'freebsd': "#ifdef FreeBSD",
 	'linux': "#ifdef Linux",
 	'macos': "#ifdef MacOS",
@@ -180,16 +181,13 @@ function patch_plat() {
 		var txt1;
 		var val = plats1[f];
 
-		if (txt.indexOf(val) >= 0)
-			return;
-
 		console.log("patch", fname);
 		txt = '#include <exlib/include/osconfig.h>\n\n' + val + '\n\n' + txt + '\n\n#endif';
 		txt1 = txt.replace('void OS::Sleep', 'void OS_Sleep');
 		txt1 = txt1.replace('class Thread::PlatformData {', '#if 0\nclass Thread::PlatformData {');
 
 		if (txt != txt1) {
-			var idx = txt1.indexOf('} }', txt1.lastIndexOf('Thread::'));
+			var idx = txt1.indexOf('}  // namespace base', txt1.lastIndexOf('Thread::'));
 
 			txt1 = txt1.substr(0, idx) + '#endif\n\n' + txt1.substr(idx);
 		}
@@ -238,6 +236,12 @@ patch_samp();
 
 patch_src('src');
 patch_plat();
+
+//fs.unlink('src/version_gen.cc');
+
+fs.unlink('src/snapshot/mksnapshot.cc')
+fs.unlink('src/snapshot/natives-external.cc')
+fs.unlink('src/snapshot/snapshot-external.cc')
 
 
 run('./vsmake.js');

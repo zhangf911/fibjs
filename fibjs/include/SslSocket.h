@@ -138,7 +138,7 @@ public:
 
         if (!m_lock.trylock())
         {
-            v8::Unlocker unlocker(isolate);
+            v8::Unlocker unlocker(Isolate::now().isolate);
             m_lock.lock();
         }
     }
@@ -148,7 +148,8 @@ public:
         if (!m_s)
             return;
 
-        m_lock.unlock();
+        if (m_lock.owned())
+            m_lock.unlock();
     }
 
 public:

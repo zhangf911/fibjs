@@ -72,6 +72,9 @@ typedef int SOCKET;
 #endif
 
 #include <v8/include/v8.h>
+#include "obj_ptr.h"
+#include <Isolate.h>
+
 #include <string>
 #include <math.h>
 #include <vector>
@@ -93,7 +96,6 @@ typedef int SOCKET;
 
 #include "qstring.h"
 #include "date.h"
-#include "obj_ptr.h"
 #include "Variant.h"
 
 #include <exlib/include/service.h>
@@ -166,10 +168,12 @@ typedef int result_t;
 #define CALL_E_PATH_NOT_FOUND   (-ERROR_PATH_NOT_FOUND)
 #endif
 
-#if 0
-#define V8_SCOPE()  v8::HandleScope handle_scope(isolate)
+#if 1
+#define V8_SCOPE()  v8::EscapableHandleScope handle_scope(Isolate::now().isolate)
+#define V8_RETURN(v)   handle_scope.Escape(v)
 #else
 #define V8_SCOPE()
+#define V8_RETURN(v)   (v)
 #endif
 
 #define PROPERTY_ENTER() \
@@ -219,17 +223,17 @@ typedef int result_t;
     if(hr < 0)ThrowResult(hr);
 
 #define THROW_ERROR() \
-    if(hr == CALL_E_JAVASCRIPT){ args.GetReturnValue().Set(v8::Local<v8::Value>()); return;} \
+    if(hr == CALL_E_JAVASCRIPT){ args.GetReturnValue().Set(V8_RETURN(v8::Local<v8::Value>())); return;} \
     ThrowResult(hr); return;
 
 #define METHOD_RETURN() \
     CHECK_ARGUMENT() \
     if(hr == CALL_RETURN_NULL){ args.GetReturnValue().SetNull(); return;} \
-    if(hr >= 0){ args.GetReturnValue().Set(GetReturnValue(vr)); return;} \
+    if(hr >= 0){ args.GetReturnValue().Set(V8_RETURN(GetReturnValue(vr))); return;} \
     THROW_ERROR()
 
 #define METHOD_RETURN1() \
-    CHECK_ARGUMENT() args.GetReturnValue().Set(vr); return;
+    CHECK_ARGUMENT() args.GetReturnValue().Set(V8_RETURN(vr)); return;
 
 #define METHOD_VOID() \
     CHECK_ARGUMENT() \
@@ -238,7 +242,7 @@ typedef int result_t;
 
 #define CONSTRUCT_RETURN() \
     CHECK_ARGUMENT() \
-    if(hr >= 0){ args.GetReturnValue().Set(vr->wrap(args.This())); return;} \
+    if(hr >= 0){ args.GetReturnValue().Set(V8_RETURN(vr->wrap(args.This()))); return;} \
     THROW_ERROR()
 
 #define PROPERTY_VAL(t) \
@@ -298,7 +302,7 @@ typedef int result_t;
     {} \
     virtual void leave() \
     {} \
-     
+
 
 #ifndef ARRAYSIZE
 #define ARRAYSIZE(a) \
@@ -531,14 +535,16 @@ inline result_t GetArgumentValue(v8::Local<v8::Value> v, v8::Local<v8::Object> &
     if (!v->IsObject())
         return CALL_E_INVALIDARG;
 
+    Isolate &isolate = Isolate::now();
+
     v8::Local<v8::Value> proto;
     if (s_proto.IsEmpty())
     {
-        proto = v8::Object::New(isolate)->GetPrototype();
-        s_proto.Reset(isolate, proto);
+        proto = v8::Object::New(isolate.isolate)->GetPrototype();
+        s_proto.Reset(isolate.isolate, proto);
     }
     else
-        proto = v8::Local<v8::Value>::New(isolate, s_proto);
+        proto = v8::Local<v8::Value>::New(isolate.isolate, s_proto);
 
     v8::Local<v8::Object> o = v8::Local<v8::Object>::Cast(v);
     if (!proto->Equals(o->GetPrototype()))
@@ -581,7 +587,7 @@ inline result_t GetArgumentValue(v8::Local<v8::Value> v, v8::Local<v8::Function>
 template<typename T>
 result_t GetConfigValue(v8::Local<v8::Object> o, const char *key, T &n, bool bStrict = false)
 {
-    v8::Local<v8::Value> v = o->Get(v8::String::NewFromUtf8(isolate, key));
+    v8::Local<v8::Value> v = o->Get(v8::String::NewFromUtf8(Isolate::now().isolate, key));
     if (IsEmpty(v))
         return CALL_E_PARAMNOTOPTIONAL;
 
@@ -590,27 +596,27 @@ result_t GetConfigValue(v8::Local<v8::Object> o, const char *key, T &n, bool bSt
 
 inline v8::Local<v8::Value> GetReturnValue(int32_t v)
 {
-    return v8::Int32::New(isolate, v);
+    return v8::Int32::New(Isolate::now().isolate, v);
 }
 
 inline v8::Local<v8::Value> GetReturnValue(bool v)
 {
-    return v ? v8::True(isolate) : v8::False(isolate);
+    return v ? v8::True(Isolate::now().isolate) : v8::False(Isolate::now().isolate);
 }
 
 inline v8::Local<v8::Value> GetReturnValue(double v)
 {
-    return v8::Number::New(isolate, v);
+    return v8::Number::New(Isolate::now().isolate, v);
 }
 
 inline v8::Local<v8::Value> GetReturnValue(int64_t v)
 {
-    return v8::Number::New(isolate, (double) v);
+    return v8::Number::New(Isolate::now().isolate, (double) v);
 }
 
 inline v8::Local<v8::Value> GetReturnValue(std::string &str)
 {
-    return v8::String::NewFromUtf8(isolate, str.c_str(),
+    return v8::String::NewFromUtf8(Isolate::now().isolate, str.c_str(),
                                    v8::String::kNormalString, (int) str.length());
 }
 
@@ -652,20 +658,26 @@ inline v8::Local<v8::Value> GetReturnValue(obj_ptr<T> &obj)
 
 inline v8::Local<v8::Value> ThrowError(const char *msg)
 {
-    return isolate->ThrowException(v8::Exception::Error(
-                                       v8::String::NewFromUtf8(isolate, msg)));
+    Isolate &isolate = Isolate::now();
+
+    return isolate.isolate->ThrowException(v8::Exception::Error(
+            v8::String::NewFromUtf8(isolate.isolate, msg)));
 }
 
 inline v8::Local<v8::Value> ThrowTypeError(const char *msg)
 {
-    return isolate->ThrowException(v8::Exception::TypeError(
-                                       v8::String::NewFromUtf8(isolate, msg)));
+    Isolate &isolate = Isolate::now();
+
+    return isolate.isolate->ThrowException(v8::Exception::TypeError(
+            v8::String::NewFromUtf8(isolate.isolate, msg)));
 }
 
 inline v8::Local<v8::Value> ThrowRangeError(const char *msg)
 {
-    return isolate->ThrowException(v8::Exception::RangeError(
-                                       v8::String::NewFromUtf8(isolate, msg)));
+    Isolate &isolate = Isolate::now();
+
+    return isolate.isolate->ThrowException(v8::Exception::RangeError(
+            v8::String::NewFromUtf8(isolate.isolate, msg)));
 }
 
 inline result_t LastError()
